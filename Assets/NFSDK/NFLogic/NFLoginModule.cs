@@ -1,27 +1,24 @@
-﻿using System;
-using System.Linq;
-using System.Text;
-using System.Collections;
-using System.Collections.Generic;
-using System.IO;
+﻿using Google.Protobuf;
 using NFMsg;
-using UnityEngine;
 using NFSDK;
-using Google.Protobuf;
+using System;
+using System.Collections;
+using System.IO;
+using UnityEngine;
 
 namespace NFrame
 {
-	public class NFLoginModule : NFIModule
-    {    
-		public enum Event : int
+    public class NFLoginModule : NFIModule
+    {
+        public enum Event : int
         {
-			StartToConnect = 0,
-			Connected,
+            StartToConnect = 0,
+            Connected,
             Disconnected,
             ConnectionRefused,
 
             RoleList = 10,
-			LoginSuccess,
+            LoginSuccess,
             LoginFailure,
             WorldList,
             ServerList,
@@ -44,7 +41,7 @@ namespace NFrame
         public string mRoleName;
         public ArrayList mRoleList = new ArrayList();
 
-		private MemoryStream mxBody = new MemoryStream();
+        private MemoryStream mxBody = new MemoryStream();
 
         private NFNetModule mNetModule;
         private NFUIModule mUIModule;
@@ -55,10 +52,10 @@ namespace NFrame
         public NFLoginModule(NFIPluginManager pluginManager)
         {
             mPluginManager = pluginManager;
-		}
+        }
 
         public override void Awake()
-		{
+        {
             mNetModule = mPluginManager.FindModule<NFNetModule>();
             mUIModule = mPluginManager.FindModule<NFUIModule>();
             mEventModule = mPluginManager.FindModule<NFIEventModule>();
@@ -67,7 +64,7 @@ namespace NFrame
         }
 
         public override void Init()
-		{
+        {
             mNetModule.AddReceiveCallBack((int)NFMsg.EGameMsgID.AckLogin, OnLoginProcess);
             mNetModule.AddReceiveCallBack((int)NFMsg.EGameMsgID.AckWorldList, OnWorldList);
             mNetModule.AddReceiveCallBack((int)NFMsg.EGameMsgID.AckConnectWorld, OnConnectWorld);
@@ -78,7 +75,7 @@ namespace NFrame
 
 
             mEventModule.RegisterCallback((int)NFLoginModule.Event.Connected, OnConnected);
-			mEventModule.RegisterCallback((int)NFLoginModule.Event.Disconnected, OnDisconnected);
+            mEventModule.RegisterCallback((int)NFLoginModule.Event.Disconnected, OnDisconnected);
 
             mEventModule.RegisterCallback((int)NFLoginModule.Event.LoginSuccess, OnLoginSuccess);
             mEventModule.RegisterCallback((int)NFLoginModule.Event.WorldList, OnWorldList);
@@ -104,18 +101,18 @@ namespace NFrame
         {
         }
 
-		public void OnConnected(int eventId, NFDataList valueList)
+        public void OnConnected(int eventId, NFDataList valueList)
         {
-			if (mKey != null && mKey.Length > 0)
-			{
-				//verify token
+            if (mKey != null && mKey.Length > 0)
+            {
+                //verify token
                 RequireVerifyWorldKey(mAccount, mKey);
-			}
+            }
         }
 
-		public void OnDisconnected(int eventId, NFDataList valueList)
+        public void OnDisconnected(int eventId, NFDataList valueList)
         {
-			if (mKey != null)
+            if (mKey != null)
             {
                 //reconnect
                 mAccount = "";
@@ -138,9 +135,9 @@ namespace NFrame
                 //mUIModule.ShowUI<NFUILogin>();
             }
         }
-        
+
         // 请求消息
-	    public void LoginPB(string strAccount, string strPwd, string strKey)
+        public void LoginPB(string strAccount, string strPwd, string strKey)
         {
             NFMsg.ReqAccountLogin xData = new NFMsg.ReqAccountLogin();
             xData.Account = ByteString.CopyFromUtf8(strAccount);
@@ -166,7 +163,7 @@ namespace NFrame
             mNetModule.SendMsg((int)NFMsg.EGameMsgID.ReqLogin, mxBody);
         }
 
-	    public void RequireWorldList()
+        public void RequireWorldList()
         {
             NFMsg.ReqServerList xData = new NFMsg.ReqServerList();
             xData.Type = NFMsg.ReqServerListType.RsltWorldServer;
@@ -174,10 +171,10 @@ namespace NFrame
             mxBody.SetLength(0);
             xData.WriteTo(mxBody);
 
-			mNetModule.SendMsg((int)NFMsg.EGameMsgID.ReqWorldList, mxBody);
+            mNetModule.SendMsg((int)NFMsg.EGameMsgID.ReqWorldList, mxBody);
         }
 
-	    public void RequireConnectWorld(int nWorldID)
+        public void RequireConnectWorld(int nWorldID)
         {
             NFMsg.ReqConnectWorld xData = new NFMsg.ReqConnectWorld();
             xData.WorldId = nWorldID;
@@ -188,10 +185,10 @@ namespace NFrame
             mxBody.SetLength(0);
             xData.WriteTo(mxBody);
 
-			mNetModule.SendMsg((int)NFMsg.EGameMsgID.ReqConnectWorld, mxBody);
+            mNetModule.SendMsg((int)NFMsg.EGameMsgID.ReqConnectWorld, mxBody);
         }
 
-	    public void RequireVerifyWorldKey(string strAccount, string strKey)
+        public void RequireVerifyWorldKey(string strAccount, string strKey)
         {
             NFMsg.ReqAccountLogin xData = new NFMsg.ReqAccountLogin();
             xData.Account = ByteString.CopyFromUtf8(strAccount);
@@ -215,7 +212,7 @@ namespace NFrame
             mNetModule.SendMsg((int)NFMsg.EGameMsgID.ReqConnectKey, mxBody);
         }
 
-	    public void RequireServerList()
+        public void RequireServerList()
         {
             NFMsg.ReqServerList xData = new NFMsg.ReqServerList();
             xData.Type = NFMsg.ReqServerListType.RsltGamesErver;
@@ -223,45 +220,45 @@ namespace NFrame
             mxBody.SetLength(0);
             xData.WriteTo(mxBody);
 
-			mNetModule.SendMsg((int)NFMsg.EGameMsgID.ReqWorldList, mxBody);
+            mNetModule.SendMsg((int)NFMsg.EGameMsgID.ReqWorldList, mxBody);
         }
 
-	    public void RequireSelectServer(int nServerID)
+        public void RequireSelectServer(int nServerID)
         {
             NFMsg.ReqSelectServer xData = new NFMsg.ReqSelectServer();
             xData.WorldId = nServerID;
             mServerID = nServerID;
-                        
+
             mxBody.SetLength(0);
             xData.WriteTo(mxBody);
 
-			mNetModule.SendMsg((int)NFMsg.EGameMsgID.ReqSelectServer, mxBody);
+            mNetModule.SendMsg((int)NFMsg.EGameMsgID.ReqSelectServer, mxBody);
         }
 
         // 接收消息
-		private void OnLoginProcess(int id, MemoryStream stream)
+        private void OnLoginProcess(int id, MemoryStream stream)
         {
-			NFMsg.MsgBase xMsg = NFMsg.MsgBase.Parser.ParseFrom(stream);
+            NFMsg.MsgBase xMsg = NFMsg.MsgBase.Parser.ParseFrom(stream);
             NFMsg.AckEventResult xData = NFMsg.AckEventResult.Parser.ParseFrom(xMsg.MsgData);
 
-            if (EGameEventCode.AccountSuccess == xData.EventCode)
+            if (EGameEventCode.AccountLoginSuccess == xData.EventCode)
             {
-				Debug.Log("Login  SUCCESS");
-				mEventModule.DoEvent((int)NFLoginModule.Event.LoginSuccess);
+                Debug.Log("Login  SUCCESS");
+                mEventModule.DoEvent((int)NFLoginModule.Event.LoginSuccess);
             }
             else
             {
                 Debug.Log("Login Faild,Code: " + xData.EventCode);
                 NFDataList varList = new NFDataList();
                 varList.AddInt((Int64)xData.EventCode);
-				mEventModule.DoEvent((int)NFLoginModule.Event.LoginFailure);
+                mEventModule.DoEvent((int)NFLoginModule.Event.LoginFailure);
             }
         }
 
         private void OnWorldList(int id, MemoryStream stream)
         {
-            
-	        NFMsg.MsgBase xMsg = NFMsg.MsgBase.Parser.ParseFrom(stream);
+
+            NFMsg.MsgBase xMsg = NFMsg.MsgBase.Parser.ParseFrom(stream);
             NFMsg.AckServerList xData = NFMsg.AckServerList.Parser.ParseFrom(xMsg.MsgData);
 
             if (ReqServerListType.RsltWorldServer == xData.Type)
@@ -273,7 +270,7 @@ namespace NFrame
                     mWorldServerList.Add(info);
                 }
 
-				mEventModule.DoEvent((int)NFLoginModule.Event.WorldList);
+                mEventModule.DoEvent((int)NFLoginModule.Event.WorldList);
             }
             else if (ReqServerListType.RsltGamesErver == xData.Type)
             {
@@ -283,31 +280,31 @@ namespace NFrame
                     Debug.Log("GameList  ServerId: " + info.ServerId + " Name: " + info.Name.ToStringUtf8() + " Status: " + info.Status);
                     mGameServerList.Add(info);
                 }
-				mEventModule.DoEvent((int)NFLoginModule.Event.ServerList);
+                mEventModule.DoEvent((int)NFLoginModule.Event.ServerList);
             }
         }
 
         private void OnConnectWorld(int id, MemoryStream stream)
         {
-	        NFMsg.MsgBase xMsg = NFMsg.MsgBase.Parser.ParseFrom(stream);
+            NFMsg.MsgBase xMsg = NFMsg.MsgBase.Parser.ParseFrom(stream);
             NFMsg.AckConnectWorldResult xData = NFMsg.AckConnectWorldResult.Parser.ParseFrom(xMsg.MsgData);
 
             mKey = xData.WorldKey.ToStringUtf8();
-            
-			mNetModule.BeforeShut();
-			mNetModule.Shut();
 
-			String strIP = xData.WorldIp.ToStringUtf8();
-			if (strIP == "127.0.0.1")
-			{
-				strIP = mNetModule.FirstIP();
-			}
-			mNetModule.StartConnect(strIP, xData.WorldPort);
+            mNetModule.BeforeShut();
+            mNetModule.Shut();
+
+            String strIP = xData.WorldIp.ToStringUtf8();
+            if (strIP == "127.0.0.1")
+            {
+                strIP = mNetModule.FirstIP();
+            }
+            mNetModule.StartConnect(strIP, xData.WorldPort);
 
         }
         private void OnConnectKey(int id, MemoryStream stream)
         {
-	        NFMsg.MsgBase xMsg = NFMsg.MsgBase.Parser.ParseFrom(stream);
+            NFMsg.MsgBase xMsg = NFMsg.MsgBase.Parser.ParseFrom(stream);
             NFMsg.AckEventResult xData = NFMsg.AckEventResult.Parser.ParseFrom(xMsg.MsgData);
 
             if (xData.EventCode == EGameEventCode.VerifyKeySuccess)
@@ -323,14 +320,14 @@ namespace NFrame
 
         private void OnSelectServer(int id, MemoryStream stream)
         {
-            NFMsg.MsgBase xMsg = NFMsg.MsgBase.Parser.ParseFrom(stream); 
+            NFMsg.MsgBase xMsg = NFMsg.MsgBase.Parser.ParseFrom(stream);
 
             NFMsg.AckEventResult xData = NFMsg.AckEventResult.Parser.ParseFrom(xMsg.MsgData);
 
             if (xData.EventCode == EGameEventCode.SelectserverSuccess)
             {
                 Debug.Log("SelectGame SUCCESS ");
-				mEventModule.DoEvent((int)NFLoginModule.Event.SelectServerSuccess);
+                mEventModule.DoEvent((int)NFLoginModule.Event.SelectServerSuccess);
             }
             else
             {
@@ -345,9 +342,9 @@ namespace NFrame
 
             NFMsg.AckRoleLiteInfoList xData = NFMsg.AckRoleLiteInfoList.Parser.ParseFrom(xMsg.MsgData);
 
-			Debug.Log("QueryRoleList  SUCCESS : " + xData.CharData.Count);
+            Debug.Log("QueryRoleList  SUCCESS : " + xData.CharData.Count);
 
-			mRoleList.Clear();
+            mRoleList.Clear();
 
             for (int i = 0; i < xData.CharData.Count; ++i)
             {
@@ -355,24 +352,24 @@ namespace NFrame
 
                 Debug.Log("QueryRoleList  SUCCESS : " + info.NoobName.ToStringUtf8());
 
-				mRoleList.Add(info);
+                mRoleList.Add(info);
             }
 
 
-			mEventModule.DoEvent((int)NFLoginModule.Event.RoleList);
+            mEventModule.DoEvent((int)NFLoginModule.Event.RoleList);
 
             //////////////////
             /*
-			if (mRoleList.Count > 0)
+            if (mRoleList.Count > 0)
             {
                 //NFCSectionManager.Instance.SetGameState(NFCSection.UI_SECTION_STATE.UISS_ROLEHALL);
 
-				NFMsg.RoleLiteInfo xLiteInfo = (NFMsg.RoleLiteInfo)mRoleList[0];
+                NFMsg.RoleLiteInfo xLiteInfo = (NFMsg.RoleLiteInfo)mRoleList[0];
                 NFGUID xEnterID = new NFGUID();
                 xEnterID.nData64 = xLiteInfo.id.index;
                 xEnterID.nHead64 = xLiteInfo.id.svrid;
 
-				mNetModule.RequireEnterGameServer(xEnterID, mAccount, xLiteInfo.noob_name.ToStringUtf8(), mServerID);
+                mNetModule.RequireEnterGameServer(xEnterID, mAccount, xLiteInfo.noob_name.ToStringUtf8(), mServerID);
 
                 //mxNetController.mPlayerState = NFNetController.PLAYER_STATE.E_PLAYER_WAITING_TO_GAME;
 
@@ -381,7 +378,7 @@ namespace NFrame
             else
             {
                 //NFCSectionManager.Instance.SetGameState(NFCSection.UI_SECTION_STATE.UISS_CREATEHALL);
-				RequireCreateRole( mAccount, 0, 0, mServerID);
+                RequireCreateRole( mAccount, 0, 0, mServerID);
                 Debug.Log("No Role!, require to create a new role! ");
             }
             */
@@ -391,13 +388,13 @@ namespace NFrame
         public void RequireRoleList()
         {
             NFMsg.ReqRoleList xData = new NFMsg.ReqRoleList();
-			xData.GameId = mServerID;
-			xData.Account = ByteString.CopyFromUtf8(mAccount);
-            
+            xData.GameId = mServerID;
+            xData.Account = ByteString.CopyFromUtf8(mAccount);
+
             mxBody.SetLength(0);
             xData.WriteTo(mxBody);
 
-			mNetModule.SendMsg((int)NFMsg.EGameMsgID.ReqRoleList, mxBody);
+            mNetModule.SendMsg((int)NFMsg.EGameMsgID.ReqRoleList, mxBody);
         }
 
         public void RequireCreateRole(string strRoleName, int byCareer, int bySex)
@@ -411,13 +408,13 @@ namespace NFrame
             xData.Career = byCareer;
             xData.Sex = bySex;
             xData.NoobName = ByteString.CopyFromUtf8(strRoleName);
-			xData.Account = ByteString.CopyFromUtf8(mAccount);
+            xData.Account = ByteString.CopyFromUtf8(mAccount);
             xData.Race = 0;
 
             mxBody.SetLength(0);
             xData.WriteTo(mxBody);
 
-			mNetModule.SendMsg((int)NFMsg.EGameMsgID.ReqCreateRole, mxBody);
+            mNetModule.SendMsg((int)NFMsg.EGameMsgID.ReqCreateRole, mxBody);
         }
 
 
@@ -426,12 +423,12 @@ namespace NFrame
             NFMsg.ReqDeleteRole xData = new NFMsg.ReqDeleteRole();
             xData.Name = ByteString.CopyFromUtf8(strRoleName);
             xData.Account = ByteString.CopyFromUtf8(mAccount);
-			xData.GameId = mServerID;
+            xData.GameId = mServerID;
 
             mxBody.SetLength(0);
             xData.WriteTo(mxBody);
 
-			mNetModule.SendMsg((int)NFMsg.EGameMsgID.ReqDeleteRole, mxBody);
+            mNetModule.SendMsg((int)NFMsg.EGameMsgID.ReqDeleteRole, mxBody);
 
 
             Debug.Log("RequireDelRole:" + strRoleName);

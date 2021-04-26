@@ -1,32 +1,31 @@
-﻿using System.Collections;
+﻿using ECM.Components;
+using NFrame;
+using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using NFrame;
-using NFSDK;
-using ECM.Components;
-using ECM.Controllers;
-using System;
 
 namespace NFSDK
 {
-	public class NFSceneModule : NFIModule
-	{
-		private static bool mbInitSend = false;
+    public class NFSceneModule : NFIModule
+    {
+        private static bool mbInitSend = false;
         private static string mTitleData;
 
-		private NFIElementModule mElementModule;
-		private NFIKernelModule mKernelModule;
-		private NFIEventModule mEventModule;
-        
-		private NFNetModule mNetModule;
-		private NFHelpModule mHelpModule;
-		private NFLoginModule mLoginModule;
+        private NFIElementModule mElementModule;
+        private NFIKernelModule mKernelModule;
+        private NFIEventModule mEventModule;
+
+        private NFNetModule mNetModule;
+        private NFHelpModule mHelpModule;
+        private NFLoginModule mLoginModule;
 
         private NFUIModule mUIModule;
 
-		private Dictionary<NFGUID, GameObject> mhtObject = new Dictionary<NFGUID, GameObject>();
-		private int mnScene = 0;
-		private bool mbLoadedScene = false;
+        private Dictionary<NFGUID, GameObject> mhtObject = new Dictionary<NFGUID, GameObject>();
+        private GameObject mModelObject;
+        private int mnScene = 0;
+        private bool mbLoadedScene = false;
 
 
         public enum PriorityLevel
@@ -55,32 +54,32 @@ namespace NFSDK
             mPluginManager = pluginManager;
         }
 
-		public override void Awake() 
-		{ 
-			mKernelModule = mPluginManager.FindModule<NFIKernelModule>();
-			mElementModule = mPluginManager.FindModule<NFIElementModule>();
+        public override void Awake()
+        {
+            mKernelModule = mPluginManager.FindModule<NFIKernelModule>();
+            mElementModule = mPluginManager.FindModule<NFIElementModule>();
 
-			mNetModule = mPluginManager.FindModule<NFNetModule>();
+            mNetModule = mPluginManager.FindModule<NFNetModule>();
             mEventModule = mPluginManager.FindModule<NFIEventModule>();
             mHelpModule = mPluginManager.FindModule<NFHelpModule>();
 
-			mLoginModule = mPluginManager.FindModule<NFLoginModule>();
+            mLoginModule = mPluginManager.FindModule<NFLoginModule>();
 
-			mUIModule = mPluginManager.FindModule<NFUIModule >();
+            mUIModule = mPluginManager.FindModule<NFUIModule>();
         }
 
-		public override void Init()
-		{ 
-		}
+        public override void Init()
+        {
+        }
 
-		public override void AfterInit() 
-		{
+        public override void AfterInit()
+        {
             mKernelModule.RegisterClassCallBack(NFrame.Player.ThisName, OnClassPlayerEventHandler);
             mKernelModule.RegisterClassCallBack(NFrame.NPC.ThisName, OnClassNPCEventHandler);
 
-		}
+        }
 
-		public override void Execute()
+        public override void Execute()
         {
             if (Input.GetKeyDown(KeyCode.Space))
             {
@@ -98,7 +97,7 @@ namespace NFSDK
             mhtObject.Clear();
         }
 
-		public override void Shut()
+        public override void Shut()
         {
         }
 
@@ -135,13 +134,13 @@ namespace NFSDK
             }
 
 
-			NFHeroInput xInput = self.GetComponent<NFHeroInput>();
-			if (!xInput)
+            NFHeroInput xInput = self.GetComponent<NFHeroInput>();
+            if (!xInput)
             {
                 xInput = self.AddComponent<NFHeroInput>();
             }
 
-			if (bMainRole)
+            if (bMainRole)
             {
                 xInput.enabled = true;
                 xInput.SetInputEnable(true);
@@ -177,7 +176,7 @@ namespace NFSDK
                 xHeroAnima.enabled = true;
             }
 
-            
+
             if (!self.GetComponent<NFAnimaStateMachine>())
             {
                 NFAnimaStateMachine xHeroAnima = self.AddComponent<NFAnimaStateMachine>();
@@ -186,13 +185,9 @@ namespace NFSDK
 
             if (bMainRole)
             {
-
-          
-
-
                 CapsuleCollider xHeroCapsuleCollider = self.GetComponent<CapsuleCollider>();
                 xHeroCapsuleCollider.isTrigger = false;
-               
+
             }
             else
             {
@@ -266,10 +261,10 @@ namespace NFSDK
                     data.Set(strConfigIndex);
                 }
 
-				if (data.StringVal().Length > 0)
-				{
-					OnConfigIDChangeHandler(self, NFrame.Player.ConfigID, data, data, 0);
-				}
+                if (data.StringVal().Length > 0)
+                {
+                    OnConfigIDChangeHandler(self, NFrame.Player.ConfigID, data, data, 0);
+                }
 
                 mKernelModule.RegisterPropertyCallback(self, NFrame.Player.ConfigID, OnConfigIDChangeHandler);
                 mKernelModule.RegisterPropertyCallback(self, NFrame.Player.HP, OnHPChangeHandler);
@@ -280,7 +275,7 @@ namespace NFSDK
         {
             if (eType == NFIObject.CLASS_EVENT_TYPE.OBJECT_CREATE)
             {
-                
+
 
             }
             else if (eType == NFIObject.CLASS_EVENT_TYPE.OBJECT_LOADDATA)
@@ -375,7 +370,7 @@ namespace NFSDK
                     NFAnimaStateMachine xStateMachineMng = go.GetComponent<NFAnimaStateMachine>();
                     if (xStateMachineMng != null)
                     {
-                        xStateMachineMng.ChangeState (NFAnimaStateType.Idle, -1);
+                        xStateMachineMng.ChangeState(NFAnimaStateType.Idle, -1);
                     }
                 }
             }
@@ -395,7 +390,7 @@ namespace NFSDK
                 vec.z = vec3.Z();
             }
 
-			string strCnfID = newVar.StringVal();
+            string strCnfID = newVar.StringVal();
             string strPrefabPath = mElementModule.QueryPropertyString(strCnfID, NPC.Prefab);
             if (strPrefabPath.Length <= 0)
             {
@@ -428,7 +423,7 @@ namespace NFSDK
                     InitPlayerComponent(self, xPlayer, false);
                 }
 
-                if (Camera.main&& self == mLoginModule.mRoleID)
+                if (Camera.main && self == mLoginModule.mRoleID)
                 {
                     NFHeroCameraFollow xHeroCameraFollow = Camera.main.GetComponent<NFHeroCameraFollow>();
                     if (!xHeroCameraFollow)
@@ -447,7 +442,7 @@ namespace NFSDK
             }
 
         }
-      
+
         public GameObject CreateObject(NFGUID ident, string strPrefabName, Vector3 vec, string strTag)
         {
             if (!mhtObject.ContainsKey(ident))
@@ -480,10 +475,10 @@ namespace NFSDK
                 GameObject xGameObject = (GameObject)mhtObject[ident];
                 mhtObject.Remove(ident);
 
-				UnityEngine.Object.Destroy(xGameObject);
+                UnityEngine.Object.Destroy(xGameObject);
 
                 //找到title，一起干掉
-				//mTitleModule.Destroy(ident);
+                //mTitleModule.Destroy(ident);
 
                 return true;
             }
@@ -500,6 +495,11 @@ namespace NFSDK
             }
 
             return null;
+        }
+
+        public GameObject GetModelObject()
+        {
+            return mModelObject;
         }
 
         public bool AttackObject(NFGUID ident, Hashtable beAttackInfo, string strStateName, Hashtable resultInfo)
@@ -526,13 +526,13 @@ namespace NFSDK
         {
             mbLoadedScene = true;
             mnScene = nSceneID;
-			mTitleData = strData;
+            mTitleData = strData;
 
             mUIModule.CloseAllUI();
             NFUILoading xUILoading = mUIModule.ShowUI<NFUILoading>();
             xUILoading.LoadLevel(nSceneID, new Vector3(fX, fY, fZ));
 
-			if (!mhtObject.ContainsKey(mLoginModule.mRoleID))
+            if (!mhtObject.ContainsKey(mLoginModule.mRoleID))
             {
                 return;
             }
@@ -555,10 +555,10 @@ namespace NFSDK
             }
         }
 
-   
+
         public void LoadSceneEnd(int nSceneID)
         {
-			if (!mbInitSend)
+            if (!mbInitSend)
             {
                 mbInitSend = true;
 
@@ -583,16 +583,74 @@ namespace NFSDK
                 //xGameObject.GetComponent<NFCStateMachineMng> ().ChangeState (NFAnimaStateType.Idle);
             }
             */
+            GameObject xGameObject = (GameObject)mhtObject[mLoginModule.mRoleID];
+            foreach (Transform child in xGameObject.GetComponentsInChildren<Transform>())
+            {
+                if (child.name.Contains("Shadow"))
+                {
+                    child.GetComponent<MeshRenderer>().enabled = false;
+                }
+                if (child.name.Contains("Hero001"))
+                {
+                    foreach (Transform grandchild in child.GetComponentsInChildren<Transform>())
+                    {
+                        if (!grandchild.name.Contains("Shadow"))
+                        {
+                            continue;
+                        }
+                    }
+                }
+            }
+
+
+            GameObject xModelGameObject = new GameObject();
+            xModelGameObject.transform.parent = xGameObject.transform;
+            Transform shadow = GetChild(xGameObject.transform, "Shadow (1)");
+            shadow.gameObject.GetComponent<MeshRenderer>().enabled = false;
+            Transform heroMesh = GetChild(xGameObject.transform, "Customer");
+            heroMesh.gameObject.GetComponent<SkinnedMeshRenderer>().enabled = false;
+            // xGameObject.GetComponent<MeshRenderer>().enabled = false;
+            initCadModel(xModelGameObject);
+            mModelObject = xModelGameObject;
 
 
             NFMsg.ESceneType nType = (NFMsg.ESceneType)mElementModule.QueryPropertyInt(nSceneID.ToString(), NFrame.Scene.Type);
             mUIModule.CloseAllUI();
-            mUIModule.ShowUI<NFUIMain>();
+            // mUIModule.ShowUI<NFUIMain>();
             mUIModule.ShowUI<NFUIEstateBar>();
             mUIModule.ShowUI<NFUIJoystick>();
 
             Debug.Log("LoadSceneEnd: " + nSceneID + " " + nType);
 
+        }
+        public static Transform GetChild(Transform parentTF, string childName)
+        {
+            //在子物体中查找
+            Transform childTF = parentTF.Find(childName);
+
+            if (childTF != null)
+            {
+                return childTF;
+            }
+            //将问题交由子物体
+            int count = parentTF.childCount;
+            for (int i = 0; i < count; i++)
+            {
+                childTF = GetChild(parentTF.GetChild(i), childName);
+                if (childTF != null)
+                {
+                    return childTF;
+                }
+            }
+            return null;
+        }
+
+        public void initCadModel(GameObject xCadModel)
+        {
+            xCadModel.name = "CADModel";
+            xCadModel.AddComponent<NFModelInput>();
+            xCadModel.AddComponent<NFModelControl>();
+            xCadModel.transform.position = new Vector3(0, 1.5f, 0);
         }
 
         public void SetVisibleAll(bool bVisible)
@@ -635,5 +693,5 @@ namespace NFSDK
 
             return 1000000f;
         }
-	}
+    }
 }

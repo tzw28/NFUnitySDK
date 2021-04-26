@@ -1,9 +1,6 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
-using UnityEngine.UI;
+﻿using NFrame;
 using NFSDK;
-using NFrame;
+using UnityEngine;
 
 public class NFUIJoystick : NFUIDialog
 {
@@ -14,6 +11,8 @@ public class NFUIJoystick : NFUIDialog
     private NFSceneModule mSceneModule;
 
     public Vector3 direction;
+    public string mModelString;
+    public GameObject mModelObj;
 
     public FloatingJoystick variableJoystick;
     //public VariableJoystick variableJoystick;
@@ -21,10 +20,12 @@ public class NFUIJoystick : NFUIDialog
     public delegate void JoyOnPointerDownHandler(Vector3 direction);
     public delegate void JoyOnPointerUpHandler(Vector3 direction);
     public delegate void JoyOnPointerDragHandler(Vector3 direction);
+    public delegate void JoyOnKeyPressModelLoadHandler(string raw);
 
     private JoyOnPointerDownHandler mOnPointerDownHandler = null;
     private JoyOnPointerUpHandler mOnPointerUpHandler = null;
     private JoyOnPointerDragHandler mOnPointerDragHandler = null;
+    private JoyOnKeyPressModelLoadHandler mOnKeyPressModelLoadHandler = null;
 
     private bool bContinuous = false;
 
@@ -41,6 +42,11 @@ public class NFUIJoystick : NFUIDialog
     public void SetPointerDragHandler(JoyOnPointerDragHandler handler)
     {
         mOnPointerDragHandler = handler;
+    }
+
+    public void SetKeyPressModelLoadHandler(JoyOnKeyPressModelLoadHandler handler)
+    {
+        mOnKeyPressModelLoadHandler = handler;
     }
 
     Vector3 NormalizeDirection(Vector3 direction)
@@ -141,7 +147,7 @@ public class NFUIJoystick : NFUIDialog
     private void OnDrag(Vector3 direction)
     {
         direction = NormalizeDirection(direction);
-       
+
         if (Vector3.Distance(lastDirection, direction) > 0.1)
         {
             lastDirection = direction;
@@ -150,6 +156,13 @@ public class NFUIJoystick : NFUIDialog
 
             //Debug.Log("OnDrag:" + direction);
         }
+    }
+
+    private void OnKeyPressModelLoad(string raw)
+    {
+        mOnKeyPressModelLoadHandler?.Invoke(raw);
+
+        //Debug.Log("OnDrag:" + direction);
     }
 
     private void Awake()
@@ -173,13 +186,19 @@ public class NFUIJoystick : NFUIDialog
 
         if (this.direction == Vector3.zero)
         {
+            if (Input.GetKey(KeyCode.Q))
+            {
+                OnKeyPressModelLoad("none");
+            }
             if (Input.GetKey(KeyCode.W)
                         || Input.GetKey(KeyCode.S)
                         || Input.GetKey(KeyCode.A)
-                        || Input.GetKey(KeyCode.D))
+                        || Input.GetKey(KeyCode.D)
+                        || Input.GetKey(KeyCode.Space))
             {
 
-                if (Input.GetKey(KeyCode.W))
+                if (Input.GetKey(KeyCode.W)
+                        || Input.GetKey(KeyCode.Space))
                 {
                     if (Input.GetKey(KeyCode.A))
                     {
@@ -242,10 +261,12 @@ public class NFUIJoystick : NFUIDialog
             if (Input.GetKey(KeyCode.W)
                         || Input.GetKey(KeyCode.S)
                         || Input.GetKey(KeyCode.A)
-                        || Input.GetKey(KeyCode.D))
+                        || Input.GetKey(KeyCode.D)
+                        || Input.GetKey(KeyCode.Space))
             {
 
-                if (Input.GetKey(KeyCode.W))
+                if (Input.GetKey(KeyCode.W)
+                        || Input.GetKey(KeyCode.Space))
                 {
                     if (Input.GetKey(KeyCode.A))
                     {

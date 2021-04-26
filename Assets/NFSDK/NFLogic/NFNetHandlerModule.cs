@@ -1,16 +1,11 @@
-﻿using System;
+﻿using NFMsg;
+using NFSDK;
+using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
-using System.Runtime.InteropServices;
-using System.Text;
-using System.Threading;
 using System.IO;
+using System.Text;
 using UnityEngine;
-using NFMsg;
-using NFrame;
-using Google.Protobuf;
-using NFSDK;
 
 namespace NFrame
 {
@@ -34,7 +29,7 @@ namespace NFrame
         private NFIClassModule mClassModule;
         private NFIElementModule mElementModule;
         private NFIEventModule mEventModule;
-        
+
         private NFLanguageModule mLanguageModule;
         private NFHelpModule mHelpModule;
         private NFNetModule mNetModule;
@@ -85,7 +80,7 @@ namespace NFrame
             mKernelModule = mPluginManager.FindModule<NFIKernelModule>();
             mElementModule = mPluginManager.FindModule<NFIElementModule>();
             mEventModule = mPluginManager.FindModule<NFIEventModule>();
-            
+
             mLanguageModule = mPluginManager.FindModule<NFLanguageModule>();
             mSceneModule = mPluginManager.FindModule<NFSceneModule>();
             mNetModule = mPluginManager.FindModule<NFNetModule>();
@@ -112,6 +107,8 @@ namespace NFrame
             mNetModule.AddReceiveCallBack((int)NFMsg.EGameMsgID.AckObjectEntry, EGMI_ACK_OBJECT_ENTRY);
             mNetModule.AddReceiveCallBack((int)NFMsg.EGameMsgID.AckObjectLeave, EGMI_ACK_OBJECT_LEAVE);
             mNetModule.AddReceiveCallBack((int)NFMsg.EGameMsgID.AckMove, EGMI_ACK_MOVE);
+
+            mNetModule.AddReceiveCallBack((int)NFMsg.EGameMsgID.AckModelRaw, EGMI_ACK_MODEL_RAW);
 
             mNetModule.AddReceiveCallBack((int)NFMsg.EGameMsgID.AckPropertyInt, EGMI_ACK_PROPERTY_INT);
             mNetModule.AddReceiveCallBack((int)NFMsg.EGameMsgID.AckPropertyFloat, EGMI_ACK_PROPERTY_FLOAT);
@@ -143,7 +140,7 @@ namespace NFrame
 
         }
 
-     
+
         public override void Execute()
         {
         }
@@ -238,7 +235,7 @@ namespace NFrame
                 string strClassName = xInfo.ClassId.ToStringUtf8();
                 string strConfigID = xInfo.ConfigId.ToStringUtf8();
 
-                Debug.Log("new Object enter: " + strClassName + " " + xObjectID.ToString() + " " + strConfigID  + " (" + xInfo.X + "," + xInfo.Y + "," + xInfo.Z + ")");
+                Debug.Log("new Object enter: " + strClassName + " " + xObjectID.ToString() + " " + strConfigID + " (" + xInfo.X + "," + xInfo.Y + "," + xInfo.Z + ")");
 
                 ObjectDataBuff xDataBuff = new ObjectDataBuff();
                 mxObjectDataBuff.Add(xObjectID, xDataBuff);
@@ -276,7 +273,7 @@ namespace NFrame
                 NFMsg.ObjectRecordList xObjectRecordList = xData.MultiPlayerRecord[i];
                 NFGUID xObjectID = mHelpModule.PBToNF(xObjectRecordList.PlayerId);
 
-                Debug.Log ("new record enter Object: " + xObjectID.ToString () );
+                Debug.Log("new record enter Object: " + xObjectID.ToString());
 
                 ObjectDataBuff xDataBuff;
                 if (mxObjectDataBuff.TryGetValue(xObjectID, out xDataBuff))
@@ -325,7 +322,7 @@ namespace NFrame
 
         private void AttachObjectData(NFGUID self)
         {
-            Debug.Log ("AttachObjectData : " + self.ToString () );
+            Debug.Log("AttachObjectData : " + self.ToString());
 
             ObjectDataBuff xDataBuff;
             if (mxObjectDataBuff.TryGetValue(self, out xDataBuff))
@@ -861,116 +858,116 @@ namespace NFrame
                     {
                         recordVecData[addStringStruct.Col] = "";
                     }
-                 }
-             }
+                }
+            }
 
-             for (int k = 0; k<xAddStruct.RecordObjectList.Count; ++k)
-             {
-                 NFMsg.RecordObject addObjectStruct = (NFMsg.RecordObject)xAddStruct.RecordObjectList[k];
+            for (int k = 0; k < xAddStruct.RecordObjectList.Count; ++k)
+            {
+                NFMsg.RecordObject addObjectStruct = (NFMsg.RecordObject)xAddStruct.RecordObjectList[k];
 
-                 if (addObjectStruct.Col >= 0)
-                 {
-                     recordVecDesc[addObjectStruct.Col] = NFDataList.VARIANT_TYPE.VTYPE_OBJECT;
-                     recordVecData[addObjectStruct.Col] = mHelpModule.PBToNF(addObjectStruct.Data);
+                if (addObjectStruct.Col >= 0)
+                {
+                    recordVecDesc[addObjectStruct.Col] = NFDataList.VARIANT_TYPE.VTYPE_OBJECT;
+                    recordVecData[addObjectStruct.Col] = mHelpModule.PBToNF(addObjectStruct.Data);
 
-                 }
-             }
+                }
+            }
 
-             for (int k = 0; k<xAddStruct.RecordVector2List.Count; ++k)
-             {
-                 NFMsg.RecordVector2 addObjectStruct = (NFMsg.RecordVector2)xAddStruct.RecordVector2List[k];
+            for (int k = 0; k < xAddStruct.RecordVector2List.Count; ++k)
+            {
+                NFMsg.RecordVector2 addObjectStruct = (NFMsg.RecordVector2)xAddStruct.RecordVector2List[k];
 
-                 if (addObjectStruct.Col >= 0)
-                 {
-                     recordVecDesc[addObjectStruct.Col] = NFDataList.VARIANT_TYPE.VTYPE_VECTOR2;
-                     recordVecData[addObjectStruct.Col] = mHelpModule.PBToNF(addObjectStruct.Data);
+                if (addObjectStruct.Col >= 0)
+                {
+                    recordVecDesc[addObjectStruct.Col] = NFDataList.VARIANT_TYPE.VTYPE_VECTOR2;
+                    recordVecData[addObjectStruct.Col] = mHelpModule.PBToNF(addObjectStruct.Data);
 
-                 }
-             }
+                }
+            }
 
-             for (int k = 0; k<xAddStruct.RecordVector3List.Count; ++k)
-             {
-                 NFMsg.RecordVector3 addObjectStruct = (NFMsg.RecordVector3)xAddStruct.RecordVector3List[k];
+            for (int k = 0; k < xAddStruct.RecordVector3List.Count; ++k)
+            {
+                NFMsg.RecordVector3 addObjectStruct = (NFMsg.RecordVector3)xAddStruct.RecordVector3List[k];
 
-                 if (addObjectStruct.Col >= 0)
-                 {
-                     recordVecDesc[addObjectStruct.Col] = NFDataList.VARIANT_TYPE.VTYPE_VECTOR3;
-                     recordVecData[addObjectStruct.Col] = mHelpModule.PBToNF(addObjectStruct.Data);
+                if (addObjectStruct.Col >= 0)
+                {
+                    recordVecDesc[addObjectStruct.Col] = NFDataList.VARIANT_TYPE.VTYPE_VECTOR3;
+                    recordVecData[addObjectStruct.Col] = mHelpModule.PBToNF(addObjectStruct.Data);
 
-                 }
-             }
+                }
+            }
 
-             NFDataList varListDesc = new NFDataList();
-             NFDataList varListData = new NFDataList();
-             for (int m = 0; m < recordVecDesc.Count; m++)
-             {
-                 if (recordVecDesc.ContainsKey(m) && recordVecData.ContainsKey(m))
-                 {
-                     NFDataList.VARIANT_TYPE nType = (NFDataList.VARIANT_TYPE)recordVecDesc[m];
-                     switch (nType)
-                     {
-                         case NFDataList.VARIANT_TYPE.VTYPE_INT:
-                         {
-                             varListDesc.AddInt(0);
-                             varListData.AddInt((Int64) recordVecData[m]);
-                         }
+            NFDataList varListDesc = new NFDataList();
+            NFDataList varListData = new NFDataList();
+            for (int m = 0; m < recordVecDesc.Count; m++)
+            {
+                if (recordVecDesc.ContainsKey(m) && recordVecData.ContainsKey(m))
+                {
+                    NFDataList.VARIANT_TYPE nType = (NFDataList.VARIANT_TYPE)recordVecDesc[m];
+                    switch (nType)
+                    {
+                        case NFDataList.VARIANT_TYPE.VTYPE_INT:
+                            {
+                                varListDesc.AddInt(0);
+                                varListData.AddInt((Int64)recordVecData[m]);
+                            }
 
-                         break;
-                         case NFDataList.VARIANT_TYPE.VTYPE_FLOAT:
-                         {
-                             varListDesc.AddFloat(0.0f);
-                             varListData.AddFloat((float) recordVecData[m]);
-                         }
-                         break;
-                         case NFDataList.VARIANT_TYPE.VTYPE_STRING:
-                         {
-                             varListDesc.AddString("");
-                             varListData.AddString((string) recordVecData[m]);
-                         }
-                         break;
-                         case NFDataList.VARIANT_TYPE.VTYPE_OBJECT:
-                         {
-                             varListDesc.AddObject(new NFGUID());
-                             varListData.AddObject((NFGUID) recordVecData[m]);
-                         }
-                         break;
-                         case NFDataList.VARIANT_TYPE.VTYPE_VECTOR2:
-                             {
-                                 varListDesc.AddVector2(new NFVector2());
-                                 varListData.AddVector2((NFVector2) recordVecData[m]);
-                             }
-                             break;
-                         case NFDataList.VARIANT_TYPE.VTYPE_VECTOR3:
-                             {
-                                 varListDesc.AddVector3(new NFVector3());
-                                 varListData.AddVector3((NFVector3) recordVecData[m]);
-                             }
-                             break;
-                         default:
-                         break;
+                            break;
+                        case NFDataList.VARIANT_TYPE.VTYPE_FLOAT:
+                            {
+                                varListDesc.AddFloat(0.0f);
+                                varListData.AddFloat((float)recordVecData[m]);
+                            }
+                            break;
+                        case NFDataList.VARIANT_TYPE.VTYPE_STRING:
+                            {
+                                varListDesc.AddString("");
+                                varListData.AddString((string)recordVecData[m]);
+                            }
+                            break;
+                        case NFDataList.VARIANT_TYPE.VTYPE_OBJECT:
+                            {
+                                varListDesc.AddObject(new NFGUID());
+                                varListData.AddObject((NFGUID)recordVecData[m]);
+                            }
+                            break;
+                        case NFDataList.VARIANT_TYPE.VTYPE_VECTOR2:
+                            {
+                                varListDesc.AddVector2(new NFVector2());
+                                varListData.AddVector2((NFVector2)recordVecData[m]);
+                            }
+                            break;
+                        case NFDataList.VARIANT_TYPE.VTYPE_VECTOR3:
+                            {
+                                varListDesc.AddVector3(new NFVector3());
+                                varListData.AddVector3((NFVector3)recordVecData[m]);
+                            }
+                            break;
+                        default:
+                            break;
 
-                     }
-                 }
-                 else
-                 {
-                     //����
-                     //Debug.LogException(i);
-                 }
-             }
+                    }
+                }
+                else
+                {
+                    //����
+                    //Debug.LogException(i);
+                }
+            }
 
-             NFIRecord xRecord = xRecordManager.GetRecord(strRecordName);
-             if (null == xRecord)
-             {
+            NFIRecord xRecord = xRecordManager.GetRecord(strRecordName);
+            if (null == xRecord)
+            {
                 Debug.Log("Empty record:" + strRecordName);
-                 string strClassName = mKernelModule.QueryPropertyString(self, NFrame.IObject.ClassName);
-                 NFIClass xLogicClass = mClassModule.GetElement(strClassName);
-                 NFIRecord xStaticRecord = xLogicClass.GetRecordManager().GetRecord(strRecordName);
+                string strClassName = mKernelModule.QueryPropertyString(self, NFrame.IObject.ClassName);
+                NFIClass xLogicClass = mClassModule.GetElement(strClassName);
+                NFIRecord xStaticRecord = xLogicClass.GetRecordManager().GetRecord(strRecordName);
 
-                 xRecord = xRecordManager.AddRecord(strRecordName, 512, varListDesc, xStaticRecord.GetTagData());
-             }
+                xRecord = xRecordManager.AddRecord(strRecordName, 512, varListDesc, xStaticRecord.GetTagData());
+            }
 
-             if (self.IsNull())
-             {
+            if (self.IsNull())
+            {
                 StringBuilder stringBuilder = new StringBuilder();
                 for (int i = 0; i < varListData.Count(); ++i)
                 {
@@ -979,10 +976,10 @@ namespace NFrame
                 }
 
                 Debug.Log(strRecordName + " add row:" + stringBuilder.ToString());
-             }
+            }
 
-             xRecord.AddRow(xAddStruct.Row, varListData);
-         }
+            xRecord.AddRow(xAddStruct.Row, varListData);
+        }
 
         private void EGMI_ACK_ADD_ROW(int id, MemoryStream stream)
         {
@@ -1063,7 +1060,7 @@ namespace NFrame
         /// 
         private void EGMI_ACK_MOVE(int id, MemoryStream stream)
         {
-     
+
             NFMsg.MsgBase xMsg = NFMsg.MsgBase.Parser.ParseFrom(stream);
 
             NFMsg.ReqAckPlayerPosSync xData = NFMsg.ReqAckPlayerPosSync.Parser.ParseFrom(xMsg.MsgData);
@@ -1157,6 +1154,26 @@ namespace NFrame
                 //NFHeroSkill xHeroSkill = xGameObject.GetComponent<NFHeroSkill>();
                 //xHeroSkill.AckSkill(xUser, xData.ClientIndex, xData.ServerIndex, xData.SkillId.ToStringUtf8(), xData.EffectData.ToList<NFMsg.EffectData>());
             }
+        }
+
+        //////////////////////////////////
+        /// 
+        private void EGMI_ACK_MODEL_RAW(int id, MemoryStream stream)
+        {
+
+            NFMsg.MsgBase xMsg = NFMsg.MsgBase.Parser.ParseFrom(stream);
+
+            NFMsg.ReqAckModelSync xData = NFMsg.ReqAckModelSync.Parser.ParseFrom(xMsg.MsgData);
+            if (xData.SyncUnit.Raw == null)
+            {
+                Debug.Log("model ack null");
+                return;
+            }
+            GameObject xModelObject = mSceneModule.GetModelObject();
+            NFModelControl modelCtl = xModelObject.GetComponent<NFModelControl>();
+            string raw = xData.SyncUnit.Raw.ToStringUtf8();
+            modelCtl.LoadTextureFromRaw(raw);
+
         }
 
         public override void AfterInit()

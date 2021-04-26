@@ -1,33 +1,30 @@
-﻿using System;
-using System.Linq;
-using System.Text;
-using System.Collections;
+﻿using Google.Protobuf;
+using NFMsg;
+using NFSDK;
+using System;
 using System.Collections.Generic;
 using System.IO;
-using Google.Protobuf;
 using UnityEngine;
-using NFSDK;
-using NFMsg;
 
 namespace NFrame
 {
-	public partial class NFNetModule : NFIModule
+    public partial class NFNetModule : NFIModule
     {
-		private NFIKernelModule mKernelModule;
-		private NFHelpModule mHelpModule;
-		private NFLogModule mLogModule;
-		private NFLoginModule mLoginModule;
+        private NFIKernelModule mKernelModule;
+        private NFHelpModule mHelpModule;
+        private NFLogModule mLogModule;
+        private NFLoginModule mLoginModule;
 
-		private NFNetListener mNetListener;
-		private NFNetClient mNetClient;
+        private NFNetListener mNetListener;
+        private NFNetClient mNetClient;
 
-		private string strFirstIP;
-		public string strGameServerIP;
+        private string strFirstIP;
+        public string strGameServerIP;
 
         //sender
         private NFMsg.MsgBase mxData = new NFMsg.MsgBase();
-		private MemoryStream mxBody = new MemoryStream();
-		private MsgHead mxHead = new MsgHead();
+        private MemoryStream mxBody = new MemoryStream();
+        private MsgHead mxHead = new MsgHead();
         private byte[] sendBytes = new byte[ConstDefine.NF_PACKET_BUFF_SIZE];
 
         public NFNetModule(NFIPluginManager pluginManager)
@@ -35,26 +32,26 @@ namespace NFrame
             mNetListener = new NFNetListener();
             mPluginManager = pluginManager;
         }
-        
+
         public override void Awake()
         {
         }
 
-		public override void Init()
-		{
-		}
+        public override void Init()
+        {
+        }
 
         public override void Execute()
         {
-			if (null != mNetClient)
-			{
-				mNetClient.Execute();
-			}
+            if (null != mNetClient)
+            {
+                mNetClient.Execute();
+            }
         }
 
         public override void BeforeShut()
         {
-			if (null != mNetClient)
+            if (null != mNetClient)
             {
                 mNetClient.Disconnect();
             }
@@ -62,28 +59,28 @@ namespace NFrame
 
         public override void Shut()
         {
-			mNetClient = null;
-		}
+            mNetClient = null;
+        }
 
-		public override void AfterInit()
-		{
-			mHelpModule = mPluginManager.FindModule<NFHelpModule>();
-			mKernelModule = mPluginManager.FindModule<NFIKernelModule>();
-			mLogModule = mPluginManager.FindModule<NFLogModule>();
-			mLoginModule = mPluginManager.FindModule<NFLoginModule>();
+        public override void AfterInit()
+        {
+            mHelpModule = mPluginManager.FindModule<NFHelpModule>();
+            mKernelModule = mPluginManager.FindModule<NFIKernelModule>();
+            mLogModule = mPluginManager.FindModule<NFLogModule>();
+            mLoginModule = mPluginManager.FindModule<NFLoginModule>();
 
-		}
+        }
 
-		public String FirstIP()
-		{
-			return strFirstIP;
-		}
+        public String FirstIP()
+        {
+            return strFirstIP;
+        }
 
         public void StartConnect(string strIP, int nPort)
         {
             Debug.Log(Time.realtimeSinceStartup.ToString() + " StartConnect " + strIP + " " + nPort.ToString());
 
-			mNetClient = new NFNetClient(mNetListener);
+            mNetClient = new NFNetClient(mNetListener);
 
             mNetClient.Connect(strIP, nPort);
 
@@ -91,7 +88,7 @@ namespace NFrame
             {
                 strFirstIP = strIP;
             }
-            else if(strGameServerIP == null)
+            else if (strGameServerIP == null)
             {
                 strGameServerIP = strIP;
             }
@@ -107,14 +104,14 @@ namespace NFrame
             return mNetClient.GetState();
         }
 
-		public void AddReceiveCallBack(int eMsg, NFSDK.NFNetListener.MsgDelegation netHandler)
+        public void AddReceiveCallBack(int eMsg, NFSDK.NFNetListener.MsgDelegation netHandler)
         {
-			mNetListener.RegisteredDelegation(eMsg, netHandler);
+            mNetListener.RegisteredDelegation(eMsg, netHandler);
         }
-  
-		public void AddNetEventCallBack(NFSDK.NFNetListener.EventDelegation netHandler)
+
+        public void AddNetEventCallBack(NFSDK.NFNetListener.EventDelegation netHandler)
         {
-			mNetListener.RegisteredNetEventHandler(netHandler);
+            mNetListener.RegisteredNetEventHandler(netHandler);
         }
 
         public void SendMsg(int unMsgID)
@@ -170,7 +167,7 @@ namespace NFrame
 
             /////////////////////////////////////////////////////////////////
         }
-      
+
         ////////////////////////////////////修改自身属性
         public void RequirePropertyInt(NFGUID objectID, string strPropertyName, Int64 newVar)
         {
@@ -274,17 +271,17 @@ namespace NFrame
             SendMsg((int)NFMsg.EGameMsgID.AckPropertyVector3, mxBody);
         }
 
-		public void RequireAddRow(NFGUID objectID, string strRecordName, int nRow)
+        public void RequireAddRow(NFGUID objectID, string strRecordName, int nRow)
         {
             NFMsg.ObjectRecordAddRow xData = new NFMsg.ObjectRecordAddRow();
-			xData.PlayerId = mHelpModule.NFToPB(objectID);
+            xData.PlayerId = mHelpModule.NFToPB(objectID);
             xData.RecordName = ByteString.CopyFromUtf8(strRecordName);
 
             NFMsg.RecordAddRowStruct xRecordAddRowStruct = new NFMsg.RecordAddRowStruct();
             xData.RowData.Add(xRecordAddRowStruct);
             xRecordAddRowStruct.Row = nRow;
 
-			NFIObject xObject = mKernelModule.GetObject(objectID);
+            NFIObject xObject = mKernelModule.GetObject(objectID);
             NFIRecord xRecord = xObject.GetRecordManager().GetRecord(strRecordName);
             NFDataList xRowData = xRecord.QueryRow(nRow);
             for (int i = 0; i < xRowData.Count(); i++)
@@ -356,10 +353,10 @@ namespace NFrame
             SendMsg((int)NFMsg.EGameMsgID.AckAddRow, mxBody);
         }
 
-		public void RequireRemoveRow(NFGUID objectID, string strRecordName, int nRow)
+        public void RequireRemoveRow(NFGUID objectID, string strRecordName, int nRow)
         {
             NFMsg.ObjectRecordRemove xData = new NFMsg.ObjectRecordRemove();
-			xData.PlayerId = mHelpModule.NFToPB(objectID);
+            xData.PlayerId = mHelpModule.NFToPB(objectID);
             xData.RecordName = ByteString.CopyFromUtf8(strRecordName);
             xData.RemoveRow.Add(nRow);
 
@@ -370,10 +367,10 @@ namespace NFrame
             SendMsg((int)NFMsg.EGameMsgID.AckRemoveRow, mxBody);
         }
 
-		public void RequireSwapRow(NFGUID objectID, string strRecordName, int nOriginRow, int nTargetRow)
+        public void RequireSwapRow(NFGUID objectID, string strRecordName, int nOriginRow, int nTargetRow)
         {
             NFMsg.ObjectRecordSwap xData = new NFMsg.ObjectRecordSwap();
-			xData.PlayerId = mHelpModule.NFToPB(objectID);
+            xData.PlayerId = mHelpModule.NFToPB(objectID);
             xData.OriginRecordName = ByteString.CopyFromUtf8(strRecordName);
             xData.TargetRecordName = ByteString.CopyFromUtf8(strRecordName);
             xData.RowOrigin = nOriginRow;
@@ -386,10 +383,10 @@ namespace NFrame
             SendMsg((int)NFMsg.EGameMsgID.AckSwapRow, mxBody);
         }
 
-		public void RequireRecordInt(NFGUID objectID, string strRecordName, int nRow, int nCol, NFDataList.TData newVar)
+        public void RequireRecordInt(NFGUID objectID, string strRecordName, int nRow, int nCol, NFDataList.TData newVar)
         {
             NFMsg.ObjectRecordInt xData = new NFMsg.ObjectRecordInt();
-			xData.PlayerId = mHelpModule.NFToPB(objectID);
+            xData.PlayerId = mHelpModule.NFToPB(objectID);
             xData.RecordName = ByteString.CopyFromUtf8(strRecordName);
 
             NFMsg.RecordInt xRecordInt = new NFMsg.RecordInt();
@@ -405,10 +402,10 @@ namespace NFrame
             SendMsg((int)NFMsg.EGameMsgID.AckRecordInt, mxBody);
         }
 
-		public void RequireRecordFloat(NFGUID objectID, string strRecordName, int nRow, int nCol, NFDataList.TData newVar)
+        public void RequireRecordFloat(NFGUID objectID, string strRecordName, int nRow, int nCol, NFDataList.TData newVar)
         {
             NFMsg.ObjectRecordFloat xData = new NFMsg.ObjectRecordFloat();
-			xData.PlayerId = mHelpModule.NFToPB(objectID);
+            xData.PlayerId = mHelpModule.NFToPB(objectID);
             xData.RecordName = ByteString.CopyFromUtf8(strRecordName);
 
             NFMsg.RecordFloat xRecordFloat = new NFMsg.RecordFloat();
@@ -424,10 +421,10 @@ namespace NFrame
             SendMsg((int)NFMsg.EGameMsgID.AckRecordFloat, mxBody);
         }
 
-		public void RequireRecordString(NFGUID objectID, string strRecordName, int nRow, int nCol, NFDataList.TData newVar)
+        public void RequireRecordString(NFGUID objectID, string strRecordName, int nRow, int nCol, NFDataList.TData newVar)
         {
             NFMsg.ObjectRecordString xData = new NFMsg.ObjectRecordString();
-			xData.PlayerId = mHelpModule.NFToPB(objectID);
+            xData.PlayerId = mHelpModule.NFToPB(objectID);
             xData.RecordName = ByteString.CopyFromUtf8(strRecordName);
 
             NFMsg.RecordString xRecordString = new NFMsg.RecordString();
@@ -443,10 +440,10 @@ namespace NFrame
             SendMsg((int)NFMsg.EGameMsgID.AckRecordString, mxBody);
         }
 
-		public void RequireRecordObject(NFGUID objectID, string strRecordName, int nRow, int nCol, NFDataList.TData newVar)
+        public void RequireRecordObject(NFGUID objectID, string strRecordName, int nRow, int nCol, NFDataList.TData newVar)
         {
             NFMsg.ObjectRecordObject xData = new NFMsg.ObjectRecordObject();
-			xData.PlayerId = mHelpModule.NFToPB(objectID);
+            xData.PlayerId = mHelpModule.NFToPB(objectID);
             xData.RecordName = ByteString.CopyFromUtf8(strRecordName);
 
             NFMsg.RecordObject xRecordObject = new NFMsg.RecordObject();
@@ -462,10 +459,10 @@ namespace NFrame
             SendMsg((int)NFMsg.EGameMsgID.AckRecordObject, mxBody);
         }
 
-		public void RequireRecordVector2(NFGUID objectID, string strRecordName, int nRow, int nCol, NFDataList.TData newVar)
+        public void RequireRecordVector2(NFGUID objectID, string strRecordName, int nRow, int nCol, NFDataList.TData newVar)
         {
             NFMsg.ObjectRecordVector2 xData = new NFMsg.ObjectRecordVector2();
-			xData.PlayerId = mHelpModule.NFToPB(objectID);
+            xData.PlayerId = mHelpModule.NFToPB(objectID);
             xData.RecordName = ByteString.CopyFromUtf8(strRecordName);
 
             NFMsg.RecordVector2 xRecordVector = new NFMsg.RecordVector2();
@@ -479,10 +476,10 @@ namespace NFrame
             SendMsg((int)NFMsg.EGameMsgID.AckRecordVector2, mxBody);
         }
 
-		public void RequireRecordVector3(NFGUID objectID, string strRecordName, int nRow, int nCol, NFDataList.TData newVar)
+        public void RequireRecordVector3(NFGUID objectID, string strRecordName, int nRow, int nCol, NFDataList.TData newVar)
         {
             NFMsg.ObjectRecordVector3 xData = new NFMsg.ObjectRecordVector3();
-			xData.PlayerId = mHelpModule.NFToPB(objectID);
+            xData.PlayerId = mHelpModule.NFToPB(objectID);
             xData.RecordName = ByteString.CopyFromUtf8(strRecordName);
 
             NFMsg.RecordVector3 xRecordVector = new NFMsg.RecordVector3();
@@ -502,11 +499,11 @@ namespace NFrame
         public void RequireEnterGameServer()
         {
             NFMsg.ReqEnterGameServer xData = new NFMsg.ReqEnterGameServer();
-			xData.Name = ByteString.CopyFromUtf8(mLoginModule.mRoleName);
-			xData.Account = ByteString.CopyFromUtf8(mLoginModule.mAccount);
-			xData.GameId = 0;
-			xData.Id = mHelpModule.NFToPB(mLoginModule.mRoleID);
-			
+            xData.Name = ByteString.CopyFromUtf8(mLoginModule.mRoleName);
+            xData.Account = ByteString.CopyFromUtf8(mLoginModule.mAccount);
+            xData.GameId = 0;
+            xData.Id = mHelpModule.NFToPB(mLoginModule.mRoleID);
+
             mxBody.SetLength(0);
             xData.WriteTo(mxBody);
 
@@ -568,6 +565,22 @@ namespace NFrame
             SendMsg((int)NFMsg.EGameMsgID.ReqMove, mxBody);
 
             //为了表现，客户端先走，后续同步
+        }
+
+        // 模型网格
+        public void RequireModelRaw(NFGUID objectID)
+        {
+            NFMsg.ReqAckModelSync xData = new NFMsg.ReqAckModelSync();
+
+            NFMsg.ModelSyncUnit modelSyncUnit = new ModelSyncUnit();
+            // TODO 
+            // xData.SyncUnit.Add(modelSyncUnit);
+
+            mxBody.SetLength(0);
+            xData.WriteTo(mxBody);
+
+            SendMsg((int)NFMsg.EGameMsgID.ReqModelRaw, mxBody);
+
         }
 
         public void RequireMoveImmune(NFGUID objectID, UnityEngine.Vector3 vPos)
