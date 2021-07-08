@@ -109,6 +109,10 @@ namespace NFrame
             mNetModule.AddReceiveCallBack((int)NFMsg.EGameMsgID.AckMove, EGMI_ACK_MOVE);
 
             mNetModule.AddReceiveCallBack((int)NFMsg.EGameMsgID.AckModelRaw, EGMI_ACK_MODEL_RAW);
+            mNetModule.AddReceiveCallBack((int)NFMsg.EGameMsgID.AckModelInfoList, EGMI_ACK_MODEL_INFO_LIST);
+            mNetModule.AddReceiveCallBack((int)NFMsg.EGameMsgID.AckModelSwitch, EGMI_ACK_MODEL_SWITCH);
+            mNetModule.AddReceiveCallBack((int)NFMsg.EGameMsgID.AckModelTarget, EGMI_ACK_MODEL_TARGET);
+            mNetModule.AddReceiveCallBack((int)NFMsg.EGameMsgID.AckModelView, EGMI_ACK_MODEL_VIEW);
 
             mNetModule.AddReceiveCallBack((int)NFMsg.EGameMsgID.AckPropertyInt, EGMI_ACK_PROPERTY_INT);
             mNetModule.AddReceiveCallBack((int)NFMsg.EGameMsgID.AckPropertyFloat, EGMI_ACK_PROPERTY_FLOAT);
@@ -1115,7 +1119,7 @@ namespace NFrame
                 v.y = syncUnit.Pos.Y;
                 v.z = syncUnit.Pos.Z;
 
-                Debug.Log("Move " + v);
+                // Debug.Log("Move " + v);
 
                 if (syncUnit.Type == PosSyncUnit.Types.EMoveType.EmtWalk)
                 {
@@ -1160,10 +1164,18 @@ namespace NFrame
         /// 
         private void EGMI_ACK_MODEL_RAW(int id, MemoryStream stream)
         {
-
+            System.DateTime startTime = TimeZone.CurrentTimeZone.ToLocalTime(new System.DateTime(1970, 1, 1)); // 当地时区
+            long timeStamp = (long)(DateTime.Now - startTime).TotalMilliseconds; // 相差秒数
+            Debug.Log("receive msg " + timeStamp);
             NFMsg.MsgBase xMsg = NFMsg.MsgBase.Parser.ParseFrom(stream);
 
             NFMsg.ReqAckModelSync xData = NFMsg.ReqAckModelSync.Parser.ParseFrom(xMsg.MsgData);
+            Debug.Log(xData.Msg.ToStringUtf8());
+            string[] msgs = xData.Msg.ToStringUtf8().Split(' ');
+            List<long> times = new List<long>();
+            times.Add(long.Parse(msgs[1]) - long.Parse(msgs[0]));
+            times.Add(long.Parse(msgs[2]) - long.Parse(msgs[1]));
+            times.Add(timeStamp - long.Parse(msgs[2]));
             if (xData.SyncUnit.Raw == null)
             {
                 Debug.Log("model ack null");
@@ -1172,8 +1184,147 @@ namespace NFrame
             GameObject xModelObject = mSceneModule.GetModelObject();
             NFModelControl modelCtl = xModelObject.GetComponent<NFModelControl>();
             string raw = xData.SyncUnit.Raw.ToStringUtf8();
-            modelCtl.LoadTextureFromRaw(raw);
+            // System.Diagnostics.Stopwatch stopwatch = new System.Diagnostics.Stopwatch();
+            // stopwatch.Start(); //  开始监视代码运行时间
 
+            DateTime beforDT = System.DateTime.Now;
+            Debug.Log(String.Format("开始{0}ms.", beforDT.Millisecond));
+            modelCtl.LoadTextureFromRaw(raw);
+            // stopwatch.Stop(); //  停止监视
+            // System.TimeSpan timespan = stopwatch.Elapsed;
+            // double milliseconds = timespan.TotalMilliseconds;  //  总毫秒数
+            DateTime afterDT = System.DateTime.Now;
+            Debug.Log(String.Format("结束{0}ms.", afterDT));
+            TimeSpan ts = afterDT.Subtract(beforDT);
+            Debug.Log(String.Format("总共花费{0}ms.", ts.TotalMilliseconds));
+            times.Add((long)ts.TotalMilliseconds);
+            // Debug.Log("Recalculate Normals " + milliseconds);
+            NFUIMain mainUI = mUIModule.GetUI<NFUIMain>();
+
+            mainUI.SetMessage(0, "读取模型: " + times[0].ToString() + " ms");
+            mainUI.SetMessage(1, "网格转换: " + times[1].ToString() + " ms");
+            mainUI.SetMessage(2, "网络传输: " + times[2].ToString() + " ms");
+            mainUI.SetMessage(3, "模型加载: " + times[3].ToString() + " ms");
+        }
+
+        private void EGMI_ACK_MODEL_INFO_LIST(int id, MemoryStream stream)
+        {
+            NFMsg.MsgBase xMsg = NFMsg.MsgBase.Parser.ParseFrom(stream);
+            NFMsg.ReqAckModelInfoList xData = NFMsg.ReqAckModelInfoList.Parser.ParseFrom(xMsg.MsgData);
+            // Debug.Log(xData.Msg.ToStringUtf8());
+            for (int i = 0; i < xData.InfoList.Count; i++)
+            {
+                mSceneModule.AddModelInfo(xData.InfoList[i]);
+            }
+            mSceneModule.SetCurrentModel(xData.Cur);
+            NFModelInfo mi = mSceneModule.GetModelInfo(mSceneModule.GetCurrentModelIndex());
+            Debug.Log(mi.mName);
+        }
+
+        private void EGMI_ACK_MODEL_SWITCH(int id, MemoryStream stream)
+        {
+            NFMsg.MsgBase xMsg = NFMsg.MsgBase.Parser.ParseFrom(stream);
+            NFMsg.ReqAckModelSwitch xData = NFMsg.ReqAckModelSwitch.Parser.ParseFrom(xMsg.MsgData);
+            // Debug.Log(xData.Msg.ToStringUtf8());
+            mSceneModule.SetCurrentModel(xData.Tar);
+            NFModelInfo mi = mSceneModule.GetModelInfo(mSceneModule.GetCurrentModelIndex());
+            Debug.Log(mi.mName);
+            // 触发请求l0模型
+            GameObject xModelObject = mSceneModule.GetModelObject();
+            NFModelInput modelInput = xModelObject.GetComponent<NFModelInput>();
+            modelInput.LoadModelEvent(mSceneModule.GetCurrentModelIndex(), 0);
+
+            modelInput.LoadModelEvent(mSceneModule.GetCurrentModelIndex(), 1);
+        }
+
+        private void EGMI_ACK_MODEL_TARGET(int id, MemoryStream stream)
+        {
+            System.DateTime startTime = TimeZone.CurrentTimeZone.ToLocalTime(new System.DateTime(1970, 1, 1)); // 当地时区
+            long timeStamp = (long)(DateTime.Now - startTime).TotalMilliseconds; // 相差秒数
+            Debug.Log("receive msg " + timeStamp);
+            NFMsg.MsgBase xMsg = NFMsg.MsgBase.Parser.ParseFrom(stream);
+
+            NFMsg.ReqAckModelTarget xData = NFMsg.ReqAckModelTarget.Parser.ParseFrom(xMsg.MsgData);
+            Debug.Log(xData.Msg.ToStringUtf8());
+            string[] msgs = xData.Msg.ToStringUtf8().Split(' ');
+            List<long> times = new List<long>();
+            times.Add(long.Parse(msgs[1]) - long.Parse(msgs[0]));
+            times.Add(long.Parse(msgs[2]) - long.Parse(msgs[1]));
+            times.Add(timeStamp - long.Parse(msgs[2]));
+            if (xData.SyncUnit.Raw == null)
+            {
+                Debug.Log("model ack null");
+                return;
+            }
+            GameObject xModelObject = mSceneModule.GetModelObject();
+            NFModelControl modelCtl = xModelObject.GetComponent<NFModelControl>();
+            string raw = xData.SyncUnit.Raw.ToStringUtf8();
+            // System.Diagnostics.Stopwatch stopwatch = new System.Diagnostics.Stopwatch();
+            // stopwatch.Start(); //  开始监视代码运行时间
+
+            DateTime beforDT = System.DateTime.Now;
+            Debug.Log(String.Format("开始{0}ms.", beforDT.Millisecond));
+            modelCtl.LoadTextureFromRaw(raw);
+            // stopwatch.Stop(); //  停止监视
+            // System.TimeSpan timespan = stopwatch.Elapsed;
+            // double milliseconds = timespan.TotalMilliseconds;  //  总毫秒数
+            DateTime afterDT = System.DateTime.Now;
+            Debug.Log(String.Format("结束{0}ms.", afterDT));
+            TimeSpan ts = afterDT.Subtract(beforDT);
+            Debug.Log(String.Format("总共花费{0}ms.", ts.TotalMilliseconds));
+            times.Add((long)ts.TotalMilliseconds);
+            // Debug.Log("Recalculate Normals " + milliseconds);
+            NFUIMain mainUI = mUIModule.GetUI<NFUIMain>();
+
+            mainUI.SetMessage(0, "读取模型: " + times[0].ToString() + " ms");
+            mainUI.SetMessage(1, "网格转换: " + times[1].ToString() + " ms");
+            mainUI.SetMessage(2, "网络传输: " + times[2].ToString() + " ms");
+            mainUI.SetMessage(3, "模型加载: " + times[3].ToString() + " ms");
+        }
+
+        private void EGMI_ACK_MODEL_VIEW(int id, MemoryStream stream)
+        {
+            NFMsg.MsgBase xMsg = NFMsg.MsgBase.Parser.ParseFrom(stream);
+            NFMsg.ReqAckModelViewSync xData = NFMsg.ReqAckModelViewSync.Parser.ParseFrom(xMsg.MsgData);
+            if (xData.SyncUnit.PlayerId == null)
+            {
+                Debug.Log("model ack null");
+                return;
+            }
+            NFGUID xPlayer = mHelpModule.PBToNF(xData.SyncUnit.PlayerId);
+            string xType;
+            if (xData.SyncUnit.PlayerType == ModelViewSyncUnit.Types.EViewPlayerType.EvstPc)
+            {
+                xType = "PC";
+            }
+            else if (xData.SyncUnit.PlayerType == ModelViewSyncUnit.Types.EViewPlayerType.EvstHololens)
+            {
+                xType = "Hololens";
+            }
+            else
+            {
+                Debug.Log("unsupport view sync message.");
+                return;
+            }
+            UnityEngine.Vector3 xCameraPos = new UnityEngine.Vector3(
+                xData.SyncUnit.CameraPos.X, xData.SyncUnit.CameraPos.Y, xData.SyncUnit.CameraPos.Z
+                );
+            UnityEngine.Vector3 xCameraRot = new UnityEngine.Vector3(
+                xData.SyncUnit.CameraRot.X, xData.SyncUnit.CameraRot.Y, xData.SyncUnit.CameraRot.Z
+                );
+            UnityEngine.Vector3 xModelPos = new UnityEngine.Vector3(
+                xData.SyncUnit.ModelPos.X, xData.SyncUnit.ModelPos.Y, xData.SyncUnit.ModelPos.Z
+                );
+            UnityEngine.Vector3 xModelRot = new UnityEngine.Vector3(
+                xData.SyncUnit.ModelRot.X, xData.SyncUnit.ModelRot.Y, xData.SyncUnit.ModelRot.Z
+                );
+            UnityEngine.Vector3 xModelScale = new UnityEngine.Vector3(
+                xData.SyncUnit.ModelScale.X, xData.SyncUnit.ModelScale.Y, xData.SyncUnit.ModelScale.Z
+                );
+            GameObject xModelObject = mSceneModule.GetModelObject();
+            NFModelControl modelCtl = xModelObject.GetComponent<NFModelControl>();
+
+            modelCtl.ViewSyncFromSource(xPlayer, xType, xCameraPos, xCameraRot, xModelPos, xModelRot, xModelScale);
         }
 
         public override void AfterInit()

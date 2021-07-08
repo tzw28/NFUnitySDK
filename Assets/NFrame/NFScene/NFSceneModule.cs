@@ -23,6 +23,8 @@ namespace NFSDK
         private NFUIModule mUIModule;
 
         private Dictionary<NFGUID, GameObject> mhtObject = new Dictionary<NFGUID, GameObject>();
+        private List<NFModelInfo> mModelList = new List<NFModelInfo>();
+        private int mCurrentModel = 0;
         private GameObject mModelObject;
         private int mnScene = 0;
         private bool mbLoadedScene = false;
@@ -454,6 +456,11 @@ namespace NFSDK
                     mhtObject.Add(ident, xGameObject);
                     GameObject.DontDestroyOnLoad(xGameObject);
 
+                    Transform shadow = GetChild(xGameObject.transform, "Shadow (1)");
+                    shadow.gameObject.GetComponent<MeshRenderer>().enabled = false;
+                    Transform heroMesh = GetChild(xGameObject.transform, "Customer");
+                    heroMesh.gameObject.GetComponent<SkinnedMeshRenderer>().enabled = false;
+
                     xGameObject.transform.position = vec;
 
                     return xGameObject;
@@ -604,20 +611,27 @@ namespace NFSDK
 
 
             GameObject xModelGameObject = new GameObject();
-            xModelGameObject.transform.parent = xGameObject.transform;
+            xModelGameObject.transform.parent = xGameObject.transform.parent;
             Transform shadow = GetChild(xGameObject.transform, "Shadow (1)");
             shadow.gameObject.GetComponent<MeshRenderer>().enabled = false;
             Transform heroMesh = GetChild(xGameObject.transform, "Customer");
             heroMesh.gameObject.GetComponent<SkinnedMeshRenderer>().enabled = false;
             // xGameObject.GetComponent<MeshRenderer>().enabled = false;
-            initCadModel(xModelGameObject);
+            InitCadModel(xModelGameObject);
             mModelObject = xModelGameObject;
+            NFHeroCameraFollow xHeroCameraFollow = Camera.main.GetComponent<NFHeroCameraFollow>();
+            if (!xHeroCameraFollow)
+            {
+                xHeroCameraFollow = Camera.main.GetComponentInParent<NFHeroCameraFollow>();
+            }
+
+            xHeroCameraFollow.SetPlayer(mModelObject.transform);
 
 
             NFMsg.ESceneType nType = (NFMsg.ESceneType)mElementModule.QueryPropertyInt(nSceneID.ToString(), NFrame.Scene.Type);
             mUIModule.CloseAllUI();
-            // mUIModule.ShowUI<NFUIMain>();
-            mUIModule.ShowUI<NFUIEstateBar>();
+            mUIModule.ShowUI<NFUIMain>();
+            // mUIModule.ShowUI<NFUIEstateBar>();
             mUIModule.ShowUI<NFUIJoystick>();
 
             Debug.Log("LoadSceneEnd: " + nSceneID + " " + nType);
@@ -645,12 +659,39 @@ namespace NFSDK
             return null;
         }
 
-        public void initCadModel(GameObject xCadModel)
+        public void InitCadModel(GameObject xCadModel)
         {
             xCadModel.name = "CADModel";
             xCadModel.AddComponent<NFModelInput>();
             xCadModel.AddComponent<NFModelControl>();
+            xCadModel.AddComponent<NFModelSync>();
             xCadModel.transform.position = new Vector3(0, 1.5f, 0);
+        }
+
+        public void AddModelInfo(NFMsg.ModelInfoUnit modelInfo)
+        {
+            NFModelInfo mi = new NFModelInfo(modelInfo);
+            mModelList.Add(mi);
+        }
+
+        public NFModelInfo GetModelInfo(int index)
+        {
+            return mModelList[index];
+        }
+
+        public int CountModelNumber()
+        {
+            return mModelList.Count;
+        }
+
+        public void SetCurrentModel(int cur)
+        {
+            mCurrentModel = cur;
+        }
+
+        public int GetCurrentModelIndex()
+        {
+            return mCurrentModel;
         }
 
         public void SetVisibleAll(bool bVisible)

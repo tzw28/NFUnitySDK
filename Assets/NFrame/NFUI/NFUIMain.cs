@@ -1,15 +1,14 @@
-﻿using UnityEngine;
-using UnityEngine.UI;
-using System.Collections;
+﻿using NFrame;
 using NFSDK;
-using NFrame;
 using System;
+using System.Collections.Generic;
+using UnityEngine.UI;
 
 public class NFUIMain : NFUIDialog
 {
-	   
-	private NFLoginModule mLoginModule;
-	private NFNetModule mNetModule;
+
+    private NFLoginModule mLoginModule;
+    private NFNetModule mNetModule;
     private NFUIModule mUIModule;
     private NFIEventModule mEventModule;
     private NFIKernelModule mKernelModule;
@@ -19,11 +18,11 @@ public class NFUIMain : NFUIDialog
     public Image headIcon;
     public Text headName;
     public Text hpText;
-	public Image hpScrollbar;
+    public Image hpScrollbar;
 
 
-	public Button mBag;
-	public Button mHero;
+    public Button mBag;
+    public Button mHero;
     public Button mChat;
     public Button mFriend;
 
@@ -33,6 +32,7 @@ public class NFUIMain : NFUIDialog
     public Button s3Button;
     public Button s4Button;
 
+    public List<Text> mMsgTextList;
 
     private void Awake()
     {
@@ -48,11 +48,11 @@ public class NFUIMain : NFUIDialog
     }
 
     // Use this for initialization
-    public override void Init ()
-	{
+    public override void Init()
+    {
         mHead.onClick.AddListener(OnBagClick);
         mBag.onClick.AddListener(OnBagClick);
-		mHero.onClick.AddListener(OnHeroClick);
+        mHero.onClick.AddListener(OnHeroClick);
         mChat.onClick.AddListener(OnChatClick);
         mFriend.onClick.AddListener(OnFriendClick);
 
@@ -63,12 +63,12 @@ public class NFUIMain : NFUIDialog
         s4Button.onClick.AddListener(OnS4Click);
 
 
-		mKernelModule.RegisterPropertyCallback(mLoginModule.mRoleID, NFrame.Player.ConfigID, OnConfigIDChange);
-        mKernelModule.RegisterPropertyCallback(mLoginModule.mRoleID, NFrame.Player.HP, OnHPChange);
-        mKernelModule.RegisterPropertyCallback(mLoginModule.mRoleID, NFrame.Player.MAXHP, OnHPChange);
-	}
+        mKernelModule.RegisterPropertyCallback(mLoginModule.mRoleID, NFrame.Player.ConfigID, OnConfigIDChange);
+        // mKernelModule.RegisterPropertyCallback(mLoginModule.mRoleID, NFrame.Player.HP, OnHPChange);
+        // mKernelModule.RegisterPropertyCallback(mLoginModule.mRoleID, NFrame.Player.MAXHP, OnHPChange);
+    }
 
-	private void OnBagClick()
+    private void OnBagClick()
     {
         mUIModule.CloseAllUI();
 
@@ -76,7 +76,7 @@ public class NFUIMain : NFUIDialog
         //profile.ShowHeroTab();
     }
 
-	private void OnHeroClick()
+    private void OnHeroClick()
     {
         mUIModule.CloseAllUI();
 
@@ -84,24 +84,24 @@ public class NFUIMain : NFUIDialog
 
     }
 
-	private void OnS1Click()
+    private void OnS1Click()
     {
 
     }
-	private void OnS2Click()
-	{
+    private void OnS2Click()
+    {
 
-	}
-	private void OnS3Click()
-	{
+    }
+    private void OnS3Click()
+    {
 
-	}
-	private void OnS4Click()
-	{
+    }
+    private void OnS4Click()
+    {
 
-	}
+    }
 
-	private void OnChatClick()
+    private void OnChatClick()
     {
 
     }
@@ -109,7 +109,7 @@ public class NFUIMain : NFUIDialog
     private void OnFriendClick()
     {
     }
-    
+
     private void OnTownClick()
     {
         mNetModule.RequireSwapScene(1);
@@ -141,19 +141,26 @@ public class NFUIMain : NFUIDialog
         int maxHP = (int)mKernelModule.QueryPropertyInt(self, NFrame.Player.MAXHP);
         int hp = (int)mKernelModule.QueryPropertyInt(self, NFrame.Player.HP);
         if (maxHP > 0)
-		{
-			hpScrollbar.fillAmount = (float)hp / maxHP;
-		}
-		else
-		{
-			hpScrollbar.fillAmount = 0;
-		}
+        {
+            hpScrollbar.fillAmount = (float)hp / maxHP;
+        }
+        else
+        {
+            hpScrollbar.fillAmount = 0;
+        }
 
-		hpText.text = hp.ToString() + "/" + maxHP.ToString();
+        hpText.text = hp.ToString() + "/" + maxHP.ToString();
     }
 
     private void OnEnable()
     {
-   
+
+    }
+
+    public void SetMessage(int id, string msg)
+    {
+        if (id >= mMsgTextList.Count)
+            return;
+        mMsgTextList[id].text = msg;
     }
 }

@@ -567,6 +567,43 @@ namespace NFrame
             //为了表现，客户端先走，后续同步
         }
 
+        // 视角报告
+        public void RequireViewSync(NFGUID objectID, UnityEngine.Vector3 cameraPos, UnityEngine.Vector3 cameraRot,
+            UnityEngine.Vector3 modelPos, UnityEngine.Vector3 modelRot, UnityEngine.Vector3 modelScale)
+        {
+            NFMsg.ReqAckModelViewSync xData = new NFMsg.ReqAckModelViewSync();
+            NFMsg.ModelViewSyncUnit viewSyncUnit = new NFMsg.ModelViewSyncUnit();
+            viewSyncUnit.PlayerId = mHelpModule.NFToPB(objectID);
+            viewSyncUnit.PlayerType = NFMsg.ModelViewSyncUnit.Types.EViewPlayerType.EvstPc; // PC
+            viewSyncUnit.CameraPos = new NFMsg.Vector3();
+            viewSyncUnit.CameraPos.X = cameraPos.x;
+            viewSyncUnit.CameraPos.Y = cameraPos.y;
+            viewSyncUnit.CameraPos.Z = cameraPos.z;
+            viewSyncUnit.CameraRot = new NFMsg.Vector3();
+            viewSyncUnit.CameraRot.X = cameraRot.x;
+            viewSyncUnit.CameraRot.Y = cameraRot.y;
+            viewSyncUnit.CameraRot.Z = cameraRot.z;
+            viewSyncUnit.ModelPos = new NFMsg.Vector3();
+            viewSyncUnit.ModelPos.X = modelPos.x;
+            viewSyncUnit.ModelPos.Y = modelPos.y;
+            viewSyncUnit.ModelPos.Z = modelPos.z;
+            viewSyncUnit.ModelRot = new NFMsg.Vector3();
+            viewSyncUnit.ModelRot.X = modelRot.x;
+            viewSyncUnit.ModelRot.Y = modelRot.y;
+            viewSyncUnit.ModelRot.Z = modelRot.z;
+            viewSyncUnit.ModelScale = new NFMsg.Vector3();
+            viewSyncUnit.ModelScale.X = modelScale.x;
+            viewSyncUnit.ModelScale.Y = modelScale.y;
+            viewSyncUnit.ModelScale.Z = modelScale.z;
+            xData.SyncUnit = viewSyncUnit;
+            mxBody.SetLength(0);
+            xData.WriteTo(mxBody);
+
+            SendMsg((int)NFMsg.EGameMsgID.ReqModelView, mxBody);
+
+            //为了表现，客户端先走，后续同步
+        }
+
         // 模型网格
         public void RequireModelRaw(NFGUID objectID)
         {
@@ -580,6 +617,57 @@ namespace NFrame
             xData.WriteTo(mxBody);
 
             SendMsg((int)NFMsg.EGameMsgID.ReqModelRaw, mxBody);
+
+        }
+
+        // 模型列表
+        public void RequireModelList(NFGUID objectID)
+        {
+            NFMsg.ReqAckModelInfoList xData = new NFMsg.ReqAckModelInfoList();
+
+            // NFMsg.ModelSyncUnit modelSyncUnit = new ModelSyncUnit();
+            // TODO 
+            // xData.SyncUnit.Add(modelSyncUnit);
+            // xData.Client = mHelpModule.NFToPB(objectID);
+            mxBody.SetLength(0);
+            xData.WriteTo(mxBody);
+
+            SendMsg((int)NFMsg.EGameMsgID.ReqModelInfoList, mxBody);
+
+        }
+
+        // 模型列表
+        public void RequireModelSwitch(NFGUID objectID, int target)
+        {
+            NFMsg.ReqAckModelSwitch xData = new NFMsg.ReqAckModelSwitch();
+
+            // NFMsg.ModelSyncUnit modelSyncUnit = new ModelSyncUnit();
+            // TODO 
+            // xData.SyncUnit.Add(modelSyncUnit);
+            // xData.Client = mHelpModule.NFToPB(objectID);
+            xData.Tar = target;
+            mxBody.SetLength(0);
+            xData.WriteTo(mxBody);
+
+            SendMsg((int)NFMsg.EGameMsgID.ReqModelSwitch, mxBody);
+
+        }
+
+        // 模型列表
+        public void RequireModelTarget(NFGUID objectID, int tar, int level)
+        {
+            NFMsg.ReqAckModelTarget xData = new NFMsg.ReqAckModelTarget();
+
+            // NFMsg.ModelSyncUnit modelSyncUnit = new ModelSyncUnit();
+            // TODO 
+            // xData.SyncUnit.Add(modelSyncUnit);
+            // xData.Client = mHelpModule.NFToPB(objectID);
+            xData.Tar = tar;
+            xData.Level = level;
+            mxBody.SetLength(0);
+            xData.WriteTo(mxBody);
+
+            SendMsg((int)NFMsg.EGameMsgID.ReqModelTarget, mxBody);
 
         }
 

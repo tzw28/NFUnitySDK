@@ -1,19 +1,16 @@
 ﻿using UnityEngine;
-using System.Collections;
-using NFrame;
-using NFSDK;
 
-public class NFHeroCameraFollow : MonoBehaviour 
+public class NFHeroCameraFollow : MonoBehaviour
 {
     [Header("Camera")]
     [Tooltip("Reference to the target GameObject.")]
     public Transform target;
     private float sensitivity = 120f;
     [Tooltip("Current relative offset to the target.")]
-    private Vector3 offset = new Vector3(0, 1, -10);
+    private Vector3 offset = new Vector3(0, 1, -17);
     [Tooltip("Minimum relative offset to the target GameObject.")]
-    private Vector3 minOffset = new Vector3(0, 0, -17);
-	[Tooltip("Maximum relative offset to the target GameObject.")]
+    private Vector3 minOffset = new Vector3(0, 0, -24);
+    [Tooltip("Maximum relative offset to the target GameObject.")]
     private Vector3 maxOffset = new Vector3(0, 0, -4);
 
 
@@ -40,12 +37,22 @@ public class NFHeroCameraFollow : MonoBehaviour
         cameraTransform = transform;
     }
 
+    public void MoveTo(Vector3 pos, Vector3 rot)
+    {
+        cameraRotation.y = rot.x;
+        cameraRotation.x = rot.y;
+        // Quaternion rotation = Quaternion.Euler(cameraRotation.y, cameraRotation.x, 0);
+        // cameraTransform.rotation = rotation;
+        cameraTransform.eulerAngles = rot;
+        cameraTransform.position = pos;
+    }
+
     public void SetPlayer(Transform transform)
     {
         target = transform;
     }
 
-        // Update is called once per frame
+    // Update is called once per frame
     private void Update()
     {
 
@@ -60,9 +67,9 @@ public class NFHeroCameraFollow : MonoBehaviour
             cameraRotation.x += Input.GetAxis("Mouse X") * sensitivity * 4 * Time.deltaTime;
             cameraRotation.y -= Input.GetAxis("Mouse Y") * sensitivity * 4 * Time.deltaTime;
 
-            if (cameraRotation.y < 15)
+            if (cameraRotation.y < -50)
             {
-                cameraRotation.y = 15;
+                cameraRotation.y = -50;
             }
             if (cameraRotation.y > 75)
             {
@@ -71,7 +78,7 @@ public class NFHeroCameraFollow : MonoBehaviour
         }
         if (target)
         {
-            offset.z += Input.GetAxis("Mouse ScrollWheel") * sensitivity * Time.deltaTime;
+            offset.z += Input.GetAxis("Mouse ScrollWheel") * sensitivity * Time.deltaTime * 3;
             offset.z = Mathf.Clamp(offset.z, minOffset.z, maxOffset.z);
 
             Quaternion rotation = Quaternion.Euler(cameraRotation.y, cameraRotation.x, 0);

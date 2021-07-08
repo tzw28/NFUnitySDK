@@ -11,7 +11,10 @@ public class NFModelSync : MonoBehaviour
     private NFHelpModule mHelpModule;
     private NFIKernelModule mKernelModule;
 
-    private float SYNC_TIME = 0.05f;
+    private float SYNC_TIME = 0.02f;
+    public bool sync_on = false;
+
+    private GameObject mMainCamera;
 
     void Awake()
     {
@@ -26,6 +29,7 @@ public class NFModelSync : MonoBehaviour
         mLoginModule = NFRoot.Instance().GetPluginManager().FindModule<NFLoginModule>();
         mHelpModule = NFRoot.Instance().GetPluginManager().FindModule<NFHelpModule>();
         mKernelModule = NFRoot.Instance().GetPluginManager().FindModule<NFIKernelModule>();
+        mMainCamera = GameObject.Find("Main Camera");
     }
 
     bool CheckState()
@@ -48,9 +52,14 @@ public class NFModelSync : MonoBehaviour
     int lastInterpolationTime = 0;
     private void FixedUpdate()
     {
-        // ReportPos();
+        ReportView();
 
         NFModelSyncBuffer.Keyframe keyframe;
+        if (mxSyncBuffer == null)
+        {
+            gameObject.AddComponent<NFModelSyncBuffer>();
+            mxSyncBuffer = gameObject.GetComponent<NFModelSyncBuffer>();
+        }
         if (mxSyncBuffer.Size() > 1)
         {
             keyframe = mxSyncBuffer.LastKeyframe();
@@ -71,51 +80,29 @@ public class NFModelSync : MonoBehaviour
     Vector3 lastPos = Vector3.zero;
     float lastReportTime = 0f;
     bool canFixFrame = true;
-    void ReportPos()
+    void ReportView()
     {
-        /*
+        if (!sync_on)
+        {
+            return;
+        }
+        Vector3 angles = mMainCamera.transform.eulerAngles;
         if (lastReportTime <= 0f)
         {
-            mNetModule.RequireMove(mLoginModule.mRoleID, (int)NFAnimaStateType.NONE, mxHeroMotor.transform.position);
+            mNetModule.RequireViewSync(mLoginModule.mRoleID, mMainCamera.transform.position, angles,
+                gameObject.transform.position, gameObject.transform.eulerAngles, gameObject.transform.localScale);
         }
+        mNetModule.RequireViewSync(mLoginModule.mRoleID, mMainCamera.transform.position, angles,
+            gameObject.transform.position, gameObject.transform.eulerAngles, gameObject.transform.localScale);
 
         if (Time.time > (SYNC_TIME + lastReportTime))
         {
             lastReportTime = Time.time;
-
-            if (mLoginModule.mRoleID == mxBodyIdent.GetObjectID())
-            {
-                if (lastPos != mxHeroMotor.transform.position)
-                {
-                    if (mxHeroMotor.moveToPos != Vector3.zero)
-                    {
-                        //是玩家自己移动
-                        lastPos = mxHeroMotor.moveToPos;
-                        canFixFrame = false;
-                    }
-                    else
-                    {
-                        //是其他技能导致的唯一，比如屠夫的钩子那种
-                        lastPos = mxHeroMotor.transform.position;
-                        canFixFrame = false;
-                    }
-
-                    mNetModule.RequireMove(mLoginModule.mRoleID, (int)mAnimaStateMachine.CurState(), lastPos);
-                }
-                else
-                {
-                    //fix last pos
-                    if (canFixFrame)
-                    {
-                        canFixFrame = false;
-                        mNetModule.RequireMove(mLoginModule.mRoleID, (int)mAnimaStateMachine.CurState(), lastPos);
-                    }
-                }
-            }
+            mNetModule.RequireViewSync(mLoginModule.mRoleID, mMainCamera.transform.position, angles,
+                gameObject.transform.position, gameObject.transform.eulerAngles, gameObject.transform.localScale);
         }
-        */
     }
-
+    /*
     public void AddSyncData(int sequence, NFMsg.PosSyncUnit syncUnit)
     {
         Clear();
@@ -146,7 +133,7 @@ public class NFModelSync : MonoBehaviour
 
             mxSyncBuffer.AddKeyframe(keyframe);
         }
-    }
+    }*/
 
     public void Clear()
     {

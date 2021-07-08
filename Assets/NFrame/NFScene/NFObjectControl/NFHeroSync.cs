@@ -1,31 +1,27 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
-using NFrame;
+﻿using NFrame;
 using NFSDK;
-using ECM.Components;
-using ECM.Controllers;
+using UnityEngine;
 
-public class NFHeroSync : MonoBehaviour 
+public class NFHeroSync : MonoBehaviour
 {
-	private NFHeroSyncBuffer mxSyncBuffer;
-	private NFHeroMotor mxHeroMotor;
+    private NFHeroSyncBuffer mxSyncBuffer;
+    private NFHeroMotor mxHeroMotor;
 
-	private NFBodyIdent mxBodyIdent;
+    private NFBodyIdent mxBodyIdent;
     private NFAnimaStateMachine mAnimaStateMachine;
     private NFAnimatStateController mAnimatStateController;
 
     private NFNetModule mNetModule;
-	private NFLoginModule mLoginModule;
+    private NFLoginModule mLoginModule;
     private NFHelpModule mHelpModule;
     private NFIKernelModule mKernelModule;
 
     private float SYNC_TIME = 0.05f;
 
-    void Awake () 
-	{
+    void Awake()
+    {
 
-	}
+    }
 
     private void Start()
     {
@@ -43,8 +39,8 @@ public class NFHeroSync : MonoBehaviour
 
     bool CheckState()
     {
-		return true;
-	}
+        return true;
+    }
 
     private bool MeetGoalCallBack()
     {
@@ -64,7 +60,7 @@ public class NFHeroSync : MonoBehaviour
         ReportPos();
 
         if (mxBodyIdent && mxBodyIdent.GetObjectID() != mLoginModule.mRoleID)
-		{
+        {
             NFHeroSyncBuffer.Keyframe keyframe;
             if (mxSyncBuffer.Size() > 1)
             {
@@ -100,7 +96,7 @@ public class NFHeroSync : MonoBehaviour
                         }
                         break;
                     case NFAnimaStateType.Idle:
-                        if (UnityEngine.Vector3.Distance(keyframe.Position , mxHeroMotor.transform.position) > 0.1f)
+                        if (UnityEngine.Vector3.Distance(keyframe.Position, mxHeroMotor.transform.position) > 0.1f)
                         {
                             mxHeroMotor.MoveTo(keyframe.Position, true, MeetGoalCallBack);
                         }
@@ -197,7 +193,7 @@ public class NFHeroSync : MonoBehaviour
 
         if (mxSyncBuffer)
         {
-            Debug.Log(keyframe.InterpolationTime + " move " + this.transform.position.ToString() + " TO " + keyframe.Position.ToString());
+            // Debug.Log(keyframe.InterpolationTime + " move " + this.transform.position.ToString() + " TO " + keyframe.Position.ToString());
 
             mxSyncBuffer.AddKeyframe(keyframe);
         }

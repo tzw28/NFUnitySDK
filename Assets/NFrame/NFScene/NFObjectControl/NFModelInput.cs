@@ -8,9 +8,11 @@ public class NFModelInput : MonoBehaviour
     private NFLoginModule mLoginModule;
     private NFIKernelModule mKernelModule;
     private NFNetModule mNetModule;
+    private NFSceneModule mSceneModule;
 
     private NFUIJoystick mJoystick;
 
+    private GameObject mMainCamera;
 
     public bool mbInputEnable = false;
 
@@ -25,8 +27,13 @@ public class NFModelInput : MonoBehaviour
         mUIModule = NFRoot.Instance().GetPluginManager().FindModule<NFUIModule>();
         mLoginModule = NFRoot.Instance().GetPluginManager().FindModule<NFLoginModule>();
         mNetModule = NFRoot.Instance().GetPluginManager().FindModule<NFNetModule>();
+        mSceneModule = NFRoot.Instance().GetPluginManager().FindModule<NFSceneModule>();
 
         mKernelModule = NFRoot.Instance().GetPluginManager().FindModule<NFIKernelModule>();
+
+        mMainCamera = GameObject.Find("Main Camera");
+        GetModelInfoList();
+        // mSceneModule.SetCurrentModel(-1);
     }
 
     void LoadTextureEvent(string raw)
@@ -35,6 +42,35 @@ public class NFModelInput : MonoBehaviour
         mNetModule.RequireModelRaw(mLoginModule.mRoleID);
     }
 
+    public void LoadModelEvent(int target, int level)
+    {
+        mNetModule.RequireModelTarget(mLoginModule.mRoleID, target, level);
+    }
+
+    void SwitchModelEvent()
+    {
+        int target = mSceneModule.GetCurrentModelIndex();
+        target = (target + 1) % mSceneModule.CountModelNumber();
+        mNetModule.RequireModelSwitch(mLoginModule.mRoleID, target);
+    }
+
+    void ViewSyncEvent()
+    {
+        NFModelSync sync = GetComponent<NFModelSync>();
+        sync.sync_on = sync.sync_on ? false : true;
+        //Vector3 angles = mMainCamera.transform.eulerAngles;
+        // angles.x = angles.x >= 180f ? angles.x - 360f : angles.x;
+        //angles.y = angles.y >= 180f ? angles.y - 360f : angles.y;
+        //mNetModule.RequireViewSync(mLoginModule.mRoleID, mMainCamera.transform.position, angles,
+        // gameObject.transform.position, gameObject.transform.eulerAngles, gameObject.transform.localScale);
+    }
+
+    void GetModelInfoList()
+    {
+        mNetModule.RequireModelList(mLoginModule.mRoleID);
+    }
+
+
     void JoyOnKeyPressModelLoadHandler(string raw)
     {
         LoadTextureEvent(raw);
@@ -42,6 +78,28 @@ public class NFModelInput : MonoBehaviour
         fLastEventTime = Time.time;
         fLastEventRaw = raw;
     }
+
+    void JoyOnKeyPressModelSwitchHandler()
+    {
+        SwitchModelEvent();
+
+        fLastEventTime = Time.time;
+    }
+
+    void JoyOnKeyPressViewSyncHandler()
+    {
+        ViewSyncEvent();
+
+        fLastEventTime = Time.time;
+    }
+
+    void JoyOnKeyPressGetModelListHandler()
+    {
+        GetModelInfoList();
+
+        fLastEventTime = Time.time;
+    }
+
 
     float fLastEventTime = 0f;
     string fLastEventRaw;
@@ -53,7 +111,10 @@ public class NFModelInput : MonoBehaviour
 
             if (mJoystick)
             {
+                mJoystick.SetKeyPressViewSyncHandler(JoyOnKeyPressViewSyncHandler);
                 mJoystick.SetKeyPressModelLoadHandler(JoyOnKeyPressModelLoadHandler);
+                mJoystick.SetKeyPressModelSwitchHandler(JoyOnKeyPressModelSwitchHandler);
+                mJoystick.SetKeyPressGetModelListHandler(JoyOnKeyPressGetModelListHandler);
             }
         }
 

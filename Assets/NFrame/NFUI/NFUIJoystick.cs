@@ -21,11 +21,17 @@ public class NFUIJoystick : NFUIDialog
     public delegate void JoyOnPointerUpHandler(Vector3 direction);
     public delegate void JoyOnPointerDragHandler(Vector3 direction);
     public delegate void JoyOnKeyPressModelLoadHandler(string raw);
+    public delegate void JoyOnKeyPressModelSwitchHandler();
+    public delegate void JoyOnKeyPressViewSyncHandler();
+    public delegate void JoyOnKeyPressGetModelListHandler();
 
     private JoyOnPointerDownHandler mOnPointerDownHandler = null;
     private JoyOnPointerUpHandler mOnPointerUpHandler = null;
     private JoyOnPointerDragHandler mOnPointerDragHandler = null;
     private JoyOnKeyPressModelLoadHandler mOnKeyPressModelLoadHandler = null;
+    private JoyOnKeyPressModelSwitchHandler mOnKeyPressModelSwitchHandler = null;
+    private JoyOnKeyPressViewSyncHandler mOnKeyPressViewSyncHandler = null;
+    private JoyOnKeyPressGetModelListHandler mOnKeyPressGetModelListHandler = null;
 
     private bool bContinuous = false;
 
@@ -47,6 +53,21 @@ public class NFUIJoystick : NFUIDialog
     public void SetKeyPressModelLoadHandler(JoyOnKeyPressModelLoadHandler handler)
     {
         mOnKeyPressModelLoadHandler = handler;
+    }
+
+    public void SetKeyPressModelSwitchHandler(JoyOnKeyPressModelSwitchHandler handler)
+    {
+        mOnKeyPressModelSwitchHandler = handler;
+    }
+
+    public void SetKeyPressViewSyncHandler(JoyOnKeyPressViewSyncHandler handler)
+    {
+        mOnKeyPressViewSyncHandler = handler;
+    }
+
+    public void SetKeyPressGetModelListHandler(JoyOnKeyPressGetModelListHandler handler)
+    {
+        mOnKeyPressGetModelListHandler = handler;
     }
 
     Vector3 NormalizeDirection(Vector3 direction)
@@ -165,6 +186,26 @@ public class NFUIJoystick : NFUIDialog
         //Debug.Log("OnDrag:" + direction);
     }
 
+    private void OnKeyPressModelSwitch()
+    {
+        mOnKeyPressModelSwitchHandler?.Invoke();
+    }
+
+    private void OnKeyPressViewSync()
+    {
+        mOnKeyPressViewSyncHandler?.Invoke();
+
+        //Debug.Log("OnDrag:" + direction);
+    }
+
+    private void OnKeyPressGetModelList()
+    {
+        // mOnKeyPressViewSyncHandler?.Invoke();
+        mOnKeyPressGetModelListHandler?.Invoke();
+
+        //Debug.Log("OnDrag:" + direction);
+    }
+
     private void Awake()
     {
         NFIPluginManager xPluginManager = NFRoot.Instance().GetPluginManager();
@@ -186,9 +227,21 @@ public class NFUIJoystick : NFUIDialog
 
         if (this.direction == Vector3.zero)
         {
-            if (Input.GetKey(KeyCode.Q))
+            if (Input.GetKeyDown(KeyCode.Q))
             {
                 OnKeyPressModelLoad("none");
+            }
+            if (Input.GetKeyDown(KeyCode.V))
+            {
+                OnKeyPressViewSync();
+            }
+            if (Input.GetKeyDown(KeyCode.E))
+            {
+                OnKeyPressModelSwitch();
+            }
+            if (Input.GetKeyDown(KeyCode.Alpha1))
+            {
+                OnKeyPressGetModelList();
             }
             if (Input.GetKey(KeyCode.W)
                         || Input.GetKey(KeyCode.S)

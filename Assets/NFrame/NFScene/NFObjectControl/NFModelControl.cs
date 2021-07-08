@@ -1,5 +1,8 @@
-﻿using System;
+﻿using NFrame;
+using NFSDK;
+using System;
 using System.Collections.Generic;
+using System.IO;
 using UnityEngine;
 
 public class NFModelControl : MonoBehaviour
@@ -10,6 +13,12 @@ public class NFModelControl : MonoBehaviour
     private List<Vector2> mUvs;
     private List<int> mTriangles;
     private int mTriangleNumber = 0;
+    private float mModelViewSize = 5.0f;
+
+    private NFLoginModule mLoginModule;
+
+    private GameObject mMainCamera;
+    private GameObject mHint;
 
     // Start is called before the first frame update
     void Start()
@@ -17,6 +26,56 @@ public class NFModelControl : MonoBehaviour
         mVertices = new List<Vector3>();
         mUvs = new List<Vector2>();
         mTriangles = new List<int>();
+
+        mLoginModule = NFRoot.Instance().GetPluginManager().FindModule<NFLoginModule>();
+        mMainCamera = GameObject.Find("Main Camera");
+    }
+
+    public void ViewSyncFromSource(NFGUID sourceID, string sourceType, Vector3 cameraPos, Vector3 cameraRot,
+                                   Vector3 modelPos, Vector3 modelRot, Vector3 modelScale)
+    {
+        if (mLoginModule.mRoleID == sourceID)
+        {
+            return;
+        }
+        if (sourceType == "PC")
+        {
+            ViewSyncFromPC(cameraPos, cameraRot, modelPos, modelRot, modelScale);
+        }
+        else if (sourceType == "Hololens")
+        {
+            ViewSyncFromHololens(cameraPos, cameraRot, modelPos, modelRot, modelScale);
+        }
+    }
+
+    private void ViewSyncFromPC(Vector3 cameraPos, Vector3 cameraRot,
+        Vector3 modelPos, Vector3 modelRot, Vector3 modelScale)
+    {
+        NFHeroCameraFollow controller = mMainCamera.GetComponent<NFHeroCameraFollow>();
+        controller.MoveTo(cameraPos, cameraRot);
+        Vector3 newModelPos = new Vector3(modelPos.x, modelPos.y, modelPos.z);
+        Vector3 newModelRot = new Vector3(modelRot.x, modelRot.y, modelRot.z);
+        transform.position = newModelPos;
+        transform.eulerAngles = newModelRot;
+    }
+
+    private void ViewSyncFromHololens(Vector3 cameraPos, Vector3 cameraRot,
+        Vector3 modelPos, Vector3 modelRot, Vector3 modelScale)
+    {
+        Vector3 newCameraPos = new Vector3(
+            cameraPos.x, cameraPos.y, cameraPos.z
+            );
+        Vector3 newCameraRot = new Vector3(
+            cameraRot.x,
+            cameraRot.y,
+            cameraRot.z);
+        NFHeroCameraFollow controller = mMainCamera.GetComponent<NFHeroCameraFollow>();
+        controller.MoveTo(newCameraPos, newCameraRot);
+
+        Vector3 newModelPos = new Vector3(modelPos.x, modelPos.y, modelPos.z);
+        Vector3 newModelRot = new Vector3(modelRot.x, modelRot.y, modelRot.z);
+        transform.position = newModelPos;
+        transform.eulerAngles = newModelRot;
     }
 
     public void LoadTextureFromRaw(string raw)
@@ -40,6 +99,11 @@ public class NFModelControl : MonoBehaviour
         m.RecalculateNormals();
 
         mf.mesh = m;
+        float newScaleX = mModelViewSize / m.bounds.size.x;
+        float newScaleY = mModelViewSize / m.bounds.size.y;
+        float newScaleZ = mModelViewSize / m.bounds.size.z;
+        float newScale = Math.Min(Math.Min(newScaleX, newScaleY), newScaleZ);
+        gameObject.transform.localScale = new Vector3(newScale, newScale, newScale);
         mr.material = new Material(Resources.Load<Material>("Utility/Materials/EthanGrey"));
 
     }
@@ -47,6 +111,24 @@ public class NFModelControl : MonoBehaviour
 
     void LoadStlAscii()
     {
+
+        StreamWriter sw;
+        FileInfo t = new FileInfo("D://UnityProj//temp.stl");
+        if (!t.Exists)
+        {
+            sw = t.CreateText();
+        }
+        else
+        {
+            sw = t.CreateText();
+        }
+        sw.WriteLine(mRaw);
+        sw.Close();
+        sw.Dispose();
+
+        mVertices.Clear();
+        mTriangles.Clear();
+        mTriangleNumber = 0;
         string[] lines = mRaw.Split(new string[] { "\n" }, StringSplitOptions.RemoveEmptyEntries);
         string s = "";
         string[] strs;
@@ -137,9 +219,9 @@ public class NFModelControl : MonoBehaviour
         if (strData.Contains("E") || strData.Contains("e"))
         {
             dData = Convert.ToDecimal(Decimal.Parse(strData.ToString(), System.Globalization.NumberStyles.Float));
+            return dData.ToString();
         }
-        return dData.ToString();
-
+        return strData;
     }
 
     // Update is called once per frame
