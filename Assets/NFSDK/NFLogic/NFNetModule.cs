@@ -88,7 +88,7 @@ namespace NFrame
             {
                 strFirstIP = strIP;
             }
-            else if (strGameServerIP == null)
+            if (strGameServerIP == null)
             {
                 strGameServerIP = strIP;
             }

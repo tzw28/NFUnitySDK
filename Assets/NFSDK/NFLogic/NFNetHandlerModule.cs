@@ -1232,7 +1232,7 @@ namespace NFrame
             // 触发请求l0模型
             GameObject xModelObject = mSceneModule.GetModelObject();
             NFModelInput modelInput = xModelObject.GetComponent<NFModelInput>();
-            modelInput.LoadModelEvent(mSceneModule.GetCurrentModelIndex(), 0);
+            // modelInput.LoadModelEvent(mSceneModule.GetCurrentModelIndex(), 0);
 
             modelInput.LoadModelEvent(mSceneModule.GetCurrentModelIndex(), 1);
         }

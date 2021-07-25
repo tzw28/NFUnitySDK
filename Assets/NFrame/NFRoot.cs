@@ -3,10 +3,10 @@
 //     Copyright (C) 2015-2019 lvsheng.huang <https://github.com/ketoo/NFrame>
 // </copyright>
 //-----------------------------------------------------------------------
-using UnityEngine;
-using System.Collections;
-using NFSDK;
 using NFrame;
+using NFSDK;
+using System.Collections;
+using UnityEngine;
 
 public enum GAME_MODE
 {
@@ -15,7 +15,7 @@ public enum GAME_MODE
     GAME_MODE_3D,
 };
 
-public class NFRoot : MonoBehaviour 
+public class NFRoot : MonoBehaviour
 {
     public bool mbShowCMDGUI = false;
     public int port = 14001;
@@ -26,17 +26,17 @@ public class NFRoot : MonoBehaviour
     private bool mbShowElement = false;
     private bool mbShowServer = true;
 
-	private NFIClassModule mClassModule;
-	private NFIKernelModule mKernelModule;
-	private NFNetModule mNetModule;
-	private NFUIModule mUIModule;
-	private NFLogModule mLogModule;
+    private NFIClassModule mClassModule;
+    private NFIKernelModule mKernelModule;
+    private NFNetModule mNetModule;
+    private NFUIModule mUIModule;
+    private NFLogModule mLogModule;
 
-	private NFConfig mConfig = new NFConfig();
+    private NFConfig mConfig = new NFConfig();
 
     private NFPluginManager mPluginManager;
     private static NFRoot _instance = null;
-	public static NFRoot Instance()
+    public static NFRoot Instance()
     {
         return _instance;
     }
@@ -56,12 +56,12 @@ public class NFRoot : MonoBehaviour
     }
 
     private void Awake()
-	{
-		mPluginManager = new NFPluginManager();
-		mxObjectElement = new NFObjectElement();
-	}
+    {
+        mPluginManager = new NFPluginManager();
+        mxObjectElement = new NFObjectElement();
+    }
 
-	void Start()
+    void Start()
     {
         _instance = this;
 
@@ -72,42 +72,42 @@ public class NFRoot : MonoBehaviour
 
 
         mPluginManager.Registered(new NFSDKPlugin(mPluginManager));
-		mPluginManager.Registered(new NFUIPlugin(mPluginManager));
-		mPluginManager.Registered(new NFScenePlugin(mPluginManager));
+        mPluginManager.Registered(new NFUIPlugin(mPluginManager));
+        mPluginManager.Registered(new NFScenePlugin(mPluginManager));
 
-		mKernelModule = mPluginManager.FindModule<NFIKernelModule>();
-		mClassModule = mPluginManager.FindModule<NFIClassModule>();
-		mNetModule = mPluginManager.FindModule<NFNetModule>();
-		mUIModule = mPluginManager.FindModule<NFUIModule>();
-		mLogModule = mPluginManager.FindModule<NFLogModule>();
+        mKernelModule = mPluginManager.FindModule<NFIKernelModule>();
+        mClassModule = mPluginManager.FindModule<NFIClassModule>();
+        mNetModule = mPluginManager.FindModule<NFNetModule>();
+        mUIModule = mPluginManager.FindModule<NFUIModule>();
+        mLogModule = mPluginManager.FindModule<NFLogModule>();
 
 
-		mClassModule.SetDataPath(mConfig.GetDataPath());
+        mClassModule.SetDataPath(mConfig.GetDataPath());
 
-		mPluginManager.Awake();
+        mPluginManager.Awake();
         mPluginManager.Init();
         mPluginManager.AfterInit();
 
-		mUIModule.ShowUI<NFUILogin>();
+        mUIModule.ShowUI<NFUILogin>();
 
-		if (mConfig.GetServerList().Count > 1)
-		{
-			mbShowServer = true;
-		}
-		else
-		{
-			string strTargetIP = "127.0.0.1";
+        if (mConfig.GetServerList().Count > 1)
+        {
+            mbShowServer = true;
+        }
+        else
+        {
+            string strTargetIP = "127.0.0.1";
             if (mConfig.GetSelectServer(ref strTargetIP))
             {
                 mNetModule.StartConnect(strTargetIP, port);
             }
-		}
+        }
 
 
 
         DontDestroyOnLoad(gameObject);
-	}
-	
+    }
+
     void OnDestroy()
     {
         Debug.Log("Root OnDestroy");
@@ -115,13 +115,13 @@ public class NFRoot : MonoBehaviour
         mPluginManager.Shut();
         mPluginManager = null;
     }
-	
-	void Update () 
-    {
-		mPluginManager.Execute();
-	}
 
-	private Vector2 scrollPosition = Vector2.zero;
+    void Update()
+    {
+        mPluginManager.Execute();
+    }
+
+    private Vector2 scrollPosition = Vector2.zero;
     private string strIP = "";
 
 
@@ -210,12 +210,12 @@ public class NFRoot : MonoBehaviour
                     mbShowElement = !mbShowElement;
                 }
             }
-		}
+        }
 
-		if (mbShowElement)
-		{
-			mxObjectElement.OnGUI(mKernelModule, 750, 1334);
-		}
+        if (mbShowElement)
+        {
+            mxObjectElement.OnGUI(mKernelModule, 750, 1334);
+        }
 
-	}
+    }
 }
