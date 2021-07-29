@@ -600,8 +600,20 @@ namespace NFrame
             xData.WriteTo(mxBody);
 
             SendMsg((int)NFMsg.EGameMsgID.ReqModelView, mxBody);
+        }
 
-            //为了表现，客户端先走，后续同步
+        public void RequireSelectionSync(NFGUID objectID, int hovered, List<int> selectList)
+        {
+            NFMsg.ReqAckModelSelectionSync xData = new NFMsg.ReqAckModelSelectionSync();
+            NFMsg.ModelSelectionSyncUnit SyncUnit = new NFMsg.ModelSelectionSyncUnit();
+            SyncUnit.PlayerId = mHelpModule.NFToPB(objectID);
+            SyncUnit.Hovered = hovered;
+            SyncUnit.Selected.Add(selectList.ToArray());
+            xData.SyncUnit = SyncUnit;
+            mxBody.SetLength(0);
+            xData.WriteTo(mxBody);
+
+            SendMsg((int)NFMsg.EGameMsgID.ReqModelSelection, mxBody);
         }
 
         // 模型网格

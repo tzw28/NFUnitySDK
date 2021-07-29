@@ -3,7 +3,14 @@ using NFSDK;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using UnityEngine;
+
+public enum ModelRawType
+{
+    STL_ASCII,
+    FORMATTED
+}
 
 public class NFModelControl : MonoBehaviour
 {
@@ -13,12 +20,14 @@ public class NFModelControl : MonoBehaviour
     private List<Vector2> mUvs;
     private List<int> mTriangles;
     private int mTriangleNumber = 0;
-    private float mModelViewSize = 5.0f;
+    private float mModelViewSize = 8.0f;
 
     private NFLoginModule mLoginModule;
 
     private GameObject mMainCamera;
     private GameObject mHint;
+
+    private List<GameObject> mParts;
 
     // Start is called before the first frame update
     void Start()
@@ -29,6 +38,7 @@ public class NFModelControl : MonoBehaviour
 
         mLoginModule = NFRoot.Instance().GetPluginManager().FindModule<NFLoginModule>();
         mMainCamera = GameObject.Find("Main Camera");
+        mParts = new List<GameObject>();
     }
 
     public void ViewSyncFromSource(NFGUID sourceID, string sourceType, Vector3 cameraPos, Vector3 cameraRot,
@@ -78,10 +88,87 @@ public class NFModelControl : MonoBehaviour
         transform.eulerAngles = newModelRot;
     }
 
-    public void LoadTextureFromRaw(string raw)
+    public void LoadPartFromRaw(string raw, string partName)
+    {
+        List<Vector3> vertices = new List<Vector3>();
+        List<int> triangles = new List<int>();
+        int triangleNumber = 0;
+        LoadFormattedModelPart(ref raw, vertices, triangles, ref triangleNumber);
+
+        Mesh m = new Mesh();
+        m.vertices = vertices.ToArray();
+        m.triangles = triangles.ToArray();
+        m.RecalculateBounds();
+        m.RecalculateNormals();
+
+        GameObject partObject = new GameObject(partName);
+        partObject.transform.parent = gameObject.transform;
+        MeshFilter mf = partObject.AddComponent<MeshFilter>();
+        mf.mesh = m;
+        float newScaleX = mModelViewSize / m.bounds.size.x;
+        float newScaleY = mModelViewSize / m.bounds.size.y;
+        float newScaleZ = mModelViewSize / m.bounds.size.z;
+        float newScale = Math.Min(Math.Min(newScaleX, newScaleY), newScaleZ);
+        partObject.transform.localScale = new Vector3(newScale, newScale, newScale);
+        MeshRenderer mr = partObject.AddComponent<MeshRenderer>();
+        mr.material = new Material(Resources.Load<Material>("Utility/Materials/EthanGrey"));
+        partObject.transform.localPosition = new Vector3(0, 0, 0);
+
+        var partCtl = partObject.AddComponent<NFModelPartControl>();
+        partCtl.SetPartId(mParts.Count());
+        partObject.AddComponent<MeshCollider>();
+        var outline = partObject.AddComponent<Outline>();
+        outline.enabled = false;
+        mParts.Add(partObject);
+    }
+
+    public void UnifyPartScales()
+    {
+        float minScale = mModelViewSize;
+        foreach (var p in mParts)
+        {
+            float s = p.transform.localScale.x;
+            if (minScale > s)
+                minScale = s;
+        }
+        foreach (var p in mParts)
+        {
+            p.transform.localScale = new Vector3(
+                minScale, minScale, minScale
+            );
+        }
+
+    }
+
+    public void SelectionSync(NFGUID playID, int hovered, List<int> selected)
+    {
+        if (playID == mLoginModule.mRoleID)
+            return;
+        for (int i = 0; i < mParts.Count(); i++)
+        {
+            if (hovered == i)
+                mParts[i].GetComponent<NFModelPartControl>().SetSharedHover(true);
+            else
+                mParts[i].GetComponent<NFModelPartControl>().SetSharedHover(false);
+            if (selected.Contains(i))
+                mParts[i].GetComponent<NFModelPartControl>().SetSharedSelect(true);
+            else
+                mParts[i].GetComponent<NFModelPartControl>().SetSharedSelect(false);
+        }
+    }
+
+    public void LoadTextureFromRaw(string raw, ModelRawType rawType)
     {
         mRaw = raw;
-        LoadStlAscii();
+        if (rawType == ModelRawType.FORMATTED)
+        {
+            LoadFormattedModel();
+        } 
+        else if (rawType == ModelRawType.STL_ASCII)
+        {
+
+            LoadStlAscii();
+        }
         MeshFilter mf = gameObject.GetComponent<MeshFilter>();
         if (!mf)
         {
@@ -96,6 +183,7 @@ public class NFModelControl : MonoBehaviour
         Mesh m = new Mesh();
         m.vertices = mVertices.ToArray();
         m.triangles = mTriangles.ToArray();
+        m.RecalculateBounds();
         m.RecalculateNormals();
 
         mf.mesh = m;
@@ -111,7 +199,7 @@ public class NFModelControl : MonoBehaviour
 
     void LoadStlAscii()
     {
-
+        /*
         StreamWriter sw;
         FileInfo t = new FileInfo("D://UnityProj//temp.stl");
         if (!t.Exists)
@@ -125,6 +213,7 @@ public class NFModelControl : MonoBehaviour
         sw.WriteLine(mRaw);
         sw.Close();
         sw.Dispose();
+        */
 
         mVertices.Clear();
         mTriangles.Clear();
@@ -199,10 +288,67 @@ public class NFModelControl : MonoBehaviour
                 }
             }
         }
+        
     }
 
+    
+    private void LoadFormattedModel()
+    {
+        mVertices.Clear();
+        mTriangles.Clear();
+        mTriangleNumber = 0;
+        int verticeNumber;
+        string[] lines = mRaw.Split(new string[] { "\n" }, StringSplitOptions.RemoveEmptyEntries);
+        string[] strs = lines[0].Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+        verticeNumber = int.Parse(strs[0]);
+        mTriangleNumber = int.Parse(strs[1]);
+        for (int i = 1; i < verticeNumber + 1; i++)
+        {
+            strs = lines[i].Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+            Vector3 vec = new Vector3(
+                float.Parse(ChangeDataToD(strs[0])),
+                float.Parse(ChangeDataToD(strs[1])),
+                float.Parse(ChangeDataToD(strs[2]))
+            );
+            mVertices.Add(vec);
+        }
+        strs = lines[verticeNumber + 1].Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+        for (int i = 0; i < mTriangleNumber * 3; i++)
+        {
+            mTriangles.Add(int.Parse(strs[i]));
+        }
+        // TestRead();
+    } 
 
-    Vector3 parseVerticeLine(string line)
+    private void LoadFormattedModelPart(ref string raw, List<Vector3> vertices, List<int> triangles, ref int triangleNumber)
+    {
+        vertices.Clear();
+        triangles.Clear();
+        triangleNumber = 0;
+        int verticeNumber;
+        string[] lines = raw.Split(new string[] { "\n" }, StringSplitOptions.RemoveEmptyEntries);
+        string[] strs = lines[0].Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+        verticeNumber = int.Parse(strs[0]);
+        triangleNumber = int.Parse(strs[1]);
+        for (int i = 1; i < verticeNumber + 1; i++)
+        {
+            strs = lines[i].Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+            Vector3 vec = new Vector3(
+                float.Parse(ChangeDataToD(strs[0])),
+                float.Parse(ChangeDataToD(strs[1])),
+                float.Parse(ChangeDataToD(strs[2]))
+            );
+            vertices.Add(vec);
+        }
+        strs = lines[verticeNumber + 1].Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+        for (int i = 0; i < triangleNumber * 3; i++)
+        {
+            triangles.Add(int.Parse(strs[i]));
+        }
+        // TestRead();
+    }
+
+    private Vector3 parseVerticeLine(string line)
     {
         string[] strs = line.Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
         Vector3 vec = new Vector3(

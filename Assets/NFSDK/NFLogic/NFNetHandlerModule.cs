@@ -113,6 +113,7 @@ namespace NFrame
             mNetModule.AddReceiveCallBack((int)NFMsg.EGameMsgID.AckModelSwitch, EGMI_ACK_MODEL_SWITCH);
             mNetModule.AddReceiveCallBack((int)NFMsg.EGameMsgID.AckModelTarget, EGMI_ACK_MODEL_TARGET);
             mNetModule.AddReceiveCallBack((int)NFMsg.EGameMsgID.AckModelView, EGMI_ACK_MODEL_VIEW);
+            mNetModule.AddReceiveCallBack((int)NFMsg.EGameMsgID.AckModelSelection, EGMI_ACK_MODEL_SELECTION);
 
             mNetModule.AddReceiveCallBack((int)NFMsg.EGameMsgID.AckPropertyInt, EGMI_ACK_PROPERTY_INT);
             mNetModule.AddReceiveCallBack((int)NFMsg.EGameMsgID.AckPropertyFloat, EGMI_ACK_PROPERTY_FLOAT);
@@ -1189,7 +1190,7 @@ namespace NFrame
 
             DateTime beforDT = System.DateTime.Now;
             Debug.Log(String.Format("开始{0}ms.", beforDT.Millisecond));
-            modelCtl.LoadTextureFromRaw(raw);
+            modelCtl.LoadTextureFromRaw(raw, ModelRawType.FORMATTED);
             // stopwatch.Stop(); //  停止监视
             // System.TimeSpan timespan = stopwatch.Elapsed;
             // double milliseconds = timespan.TotalMilliseconds;  //  总毫秒数
@@ -1227,14 +1228,15 @@ namespace NFrame
             NFMsg.ReqAckModelSwitch xData = NFMsg.ReqAckModelSwitch.Parser.ParseFrom(xMsg.MsgData);
             // Debug.Log(xData.Msg.ToStringUtf8());
             mSceneModule.SetCurrentModel(xData.Tar);
+            NFMsg.ModelInfoUnit info = xData.Info;
             NFModelInfo mi = mSceneModule.GetModelInfo(mSceneModule.GetCurrentModelIndex());
             Debug.Log(mi.mName);
-            // 触发请求l0模型
+
             GameObject xModelObject = mSceneModule.GetModelObject();
             NFModelInput modelInput = xModelObject.GetComponent<NFModelInput>();
             // modelInput.LoadModelEvent(mSceneModule.GetCurrentModelIndex(), 0);
 
-            modelInput.LoadModelEvent(mSceneModule.GetCurrentModelIndex(), 1);
+            modelInput.LoadModelEvent(mSceneModule.GetCurrentModelIndex(), 1, info.Structure.ToStringUtf8());
         }
 
         private void EGMI_ACK_MODEL_TARGET(int id, MemoryStream stream)
@@ -1264,7 +1266,7 @@ namespace NFrame
 
             DateTime beforDT = System.DateTime.Now;
             Debug.Log(String.Format("开始{0}ms.", beforDT.Millisecond));
-            modelCtl.LoadTextureFromRaw(raw);
+            modelCtl.LoadTextureFromRaw(raw, ModelRawType.FORMATTED);
             // stopwatch.Stop(); //  停止监视
             // System.TimeSpan timespan = stopwatch.Elapsed;
             // double milliseconds = timespan.TotalMilliseconds;  //  总毫秒数
@@ -1325,6 +1327,22 @@ namespace NFrame
             NFModelControl modelCtl = xModelObject.GetComponent<NFModelControl>();
 
             modelCtl.ViewSyncFromSource(xPlayer, xType, xCameraPos, xCameraRot, xModelPos, xModelRot, xModelScale);
+        }
+        private void EGMI_ACK_MODEL_SELECTION(int id, MemoryStream stream)
+        {
+            NFMsg.MsgBase xMsg = NFMsg.MsgBase.Parser.ParseFrom(stream);
+            NFMsg.ReqAckModelSelectionSync xData = NFMsg.ReqAckModelSelectionSync.Parser.ParseFrom(xMsg.MsgData);
+            if (xData.SyncUnit.PlayerId == null)
+            {
+                Debug.Log("model ack null");
+                return;
+            }
+            NFGUID xPlayer = mHelpModule.PBToNF(xData.SyncUnit.PlayerId);
+            GameObject xModelObject = mSceneModule.GetModelObject();
+            int hovered = xData.SyncUnit.Hovered;
+            List<int> selected = new List<int>(xData.SyncUnit.Selected);
+            NFModelControl modelCtl = xModelObject.GetComponent<NFModelControl>();
+            modelCtl.SelectionSync(xPlayer, hovered, selected);
         }
 
         public override void AfterInit()

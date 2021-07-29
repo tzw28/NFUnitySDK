@@ -13,6 +13,7 @@ public class NFUIMain : NFUIDialog
     private NFIEventModule mEventModule;
     private NFIKernelModule mKernelModule;
     private NFIElementModule mElementModule;
+    private NFSceneModule mSceneModule;
 
     public Button mHead;
     public Image headIcon;
@@ -34,6 +35,10 @@ public class NFUIMain : NFUIDialog
 
     public List<Text> mMsgTextList;
 
+    public Toggle HoverSyncToggle;
+    public Toggle SelectSyncToggle;
+    public Toggle ViewSyncToggle;
+
     private void Awake()
     {
         NFIPluginManager xPluginManager = NFRoot.Instance().GetPluginManager();
@@ -44,7 +49,7 @@ public class NFUIMain : NFUIDialog
 
         mKernelModule = NFRoot.Instance().GetPluginManager().FindModule<NFIKernelModule>();
         mElementModule = NFRoot.Instance().GetPluginManager().FindModule<NFIElementModule>();
-
+        mSceneModule = NFRoot.Instance().GetPluginManager().FindModule<NFSceneModule>();
     }
 
     // Use this for initialization
@@ -62,6 +67,8 @@ public class NFUIMain : NFUIDialog
         s3Button.onClick.AddListener(OnS3Click);
         s4Button.onClick.AddListener(OnS4Click);
 
+        HoverSyncToggle.onValueChanged.AddListener(OnHoverSyncChanged);
+        SelectSyncToggle.onValueChanged.AddListener(OnSelectSyncChanged);
 
         mKernelModule.RegisterPropertyCallback(mLoginModule.mRoleID, NFrame.Player.ConfigID, OnConfigIDChange);
         // mKernelModule.RegisterPropertyCallback(mLoginModule.mRoleID, NFrame.Player.HP, OnHPChange);
@@ -162,5 +169,17 @@ public class NFUIMain : NFUIDialog
         if (id >= mMsgTextList.Count)
             return;
         mMsgTextList[id].text = msg;
+    }
+
+    private void OnHoverSyncChanged(bool IsOn)
+    {
+        NFModelSync ModelSync = mSceneModule.GetModelObject().GetComponent<NFModelSync>();
+        ModelSync.mHoverSyncOn = IsOn;
+    }
+
+    private void OnSelectSyncChanged(bool IsOn)
+    {
+        NFModelSync ModelSync = mSceneModule.GetModelObject().GetComponent<NFModelSync>();
+        ModelSync.mSelectSyncOn = IsOn;
     }
 }

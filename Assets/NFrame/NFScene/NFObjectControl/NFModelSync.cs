@@ -1,5 +1,6 @@
 ﻿using NFrame;
 using NFSDK;
+using System.Collections.Generic;
 using UnityEngine;
 
 public class NFModelSync : MonoBehaviour
@@ -11,8 +12,11 @@ public class NFModelSync : MonoBehaviour
     private NFHelpModule mHelpModule;
     private NFIKernelModule mKernelModule;
 
-    private float SYNC_TIME = 0.02f;
-    public bool sync_on = false;
+    private float VIEW_SYNC_GAP = 0.02f;
+    public bool mViewSyncOn = false;
+    // public bool selection_sync_on = false;
+    public bool mSelectSyncOn = false;
+    public bool mHoverSyncOn = false;
 
     private GameObject mMainCamera;
 
@@ -82,7 +86,7 @@ public class NFModelSync : MonoBehaviour
     bool canFixFrame = true;
     void ReportView()
     {
-        if (!sync_on)
+        if (!mViewSyncOn)
         {
             return;
         }
@@ -92,15 +96,28 @@ public class NFModelSync : MonoBehaviour
             mNetModule.RequireViewSync(mLoginModule.mRoleID, mMainCamera.transform.position, angles,
                 gameObject.transform.position, gameObject.transform.eulerAngles, gameObject.transform.localScale);
         }
+        // TODO 多发了一次
         mNetModule.RequireViewSync(mLoginModule.mRoleID, mMainCamera.transform.position, angles,
             gameObject.transform.position, gameObject.transform.eulerAngles, gameObject.transform.localScale);
 
-        if (Time.time > (SYNC_TIME + lastReportTime))
+        if (Time.time > (VIEW_SYNC_GAP + lastReportTime))
         {
             lastReportTime = Time.time;
             mNetModule.RequireViewSync(mLoginModule.mRoleID, mMainCamera.transform.position, angles,
                 gameObject.transform.position, gameObject.transform.eulerAngles, gameObject.transform.localScale);
         }
+    }
+
+    public void ReportSelection(int hovered, List<int> selected)
+    {
+        if (!mSelectSyncOn && !mHoverSyncOn)
+            return;
+        if (mSelectSyncOn && !mHoverSyncOn)
+            mNetModule.RequireSelectionSync(mLoginModule.mRoleID, -1, selected);
+        if (!mSelectSyncOn && mHoverSyncOn)
+            mNetModule.RequireSelectionSync(mLoginModule.mRoleID, hovered, new List<int>());
+        if (mSelectSyncOn && mHoverSyncOn)
+            mNetModule.RequireSelectionSync(mLoginModule.mRoleID, hovered, selected);
     }
     /*
     public void AddSyncData(int sequence, NFMsg.PosSyncUnit syncUnit)
